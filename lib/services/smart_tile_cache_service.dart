@@ -9,7 +9,7 @@ import 'tile_cache_database.dart';
 /// Serviço inteligente de cache de tiles baseado em localização de elementos
 class SmartTileCacheService {
   static const String _osmUrlTemplate = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-  static const double _defaultRadiusKm = 1.0; // Raio padrão: 1km ao redor de elementos
+  static const double _defaultRadiusKm = 3.0; // Raio padrão: 3km ao redor de elementos
   static const int _defaultZoomLevel = 17; // Zoom padrão para cache
   
   // Callbacks para progresso
