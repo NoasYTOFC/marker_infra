@@ -3,6 +3,7 @@ import 'package:path/path.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'dart:math';
+import 'dart:async';
 
 /// Serviço de persistência de cache inteligente usando SQLite
 class TileCacheDatabase {
@@ -14,6 +15,9 @@ class TileCacheDatabase {
   static const String _tableCacheAreas = 'cache_areas';
   
   static Database? _database;
+  
+  // 🔒 Mutex para evitar contenção no SQLite
+  static final _databaseLock = Semaphore(1);
   
   /// Obtém instância do banco de dados
   static Future<Database> get database async {
@@ -215,188 +219,221 @@ class TileCacheDatabase {
     required String filePath,
     required int fileSize,
   }) async {
-    final db = await database;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final tileHash = _generateTileHash(z, x, y);
-    
-    await db.insert(
-      _tableCachedTiles,
-      {
-        'z': z,
-        'x': x,
-        'y': y,
-        'tile_hash': tileHash,
-        'file_path': filePath,
-        'file_size': fileSize,
-        'criado_em': now,
-        'acessado_em': now,
-      },
-      conflictAlgorithm: ConflictAlgorithm.ignore, // Ignora se já existe
-    );
+    await _databaseLock.acquire();
+    try {
+      final db = await database;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final tileHash = _generateTileHash(z, x, y);
+      
+      await db.insert(
+        _tableCachedTiles,
+        {
+          'z': z,
+          'x': x,
+          'y': y,
+          'tile_hash': tileHash,
+          'file_path': filePath,
+          'file_size': fileSize,
+          'criado_em': now,
+          'acessado_em': now,
+        },
+        conflictAlgorithm: ConflictAlgorithm.ignore, // Ignora se já existe
+      );
+    } finally {
+      _databaseLock.release();
+    }
   }
   
   /// Verifica se um tile já está em cache
   static Future<bool> isTileCached(int z, int x, int y) async {
-    final db = await database;
-    final tileHash = _generateTileHash(z, x, y);
-    
-    final result = await db.query(
-      _tableCachedTiles,
-      where: 'tile_hash = ?',
-      whereArgs: [tileHash],
-      limit: 1,
-    );
-    
-    return result.isNotEmpty;
+    await _databaseLock.acquire();
+    try {
+      final db = await database;
+      final tileHash = _generateTileHash(z, x, y);
+      
+      final result = await db.query(
+        _tableCachedTiles,
+        where: 'tile_hash = ?',
+        whereArgs: [tileHash],
+        limit: 1,
+      );
+      
+      return result.isNotEmpty;
+    } finally {
+      _databaseLock.release();
+    }
   }
   
   /// Obtém o caminho do arquivo de um tile (se existir)
   static Future<String?> getTilePath(int z, int x, int y) async {
-    final db = await database;
-    final tileHash = _generateTileHash(z, x, y);
-    
-    final result = await db.query(
-      _tableCachedTiles,
-      where: 'tile_hash = ?',
-      whereArgs: [tileHash],
-      limit: 1,
-    );
-    
-    if (result.isEmpty) return null;
-    
-    // Atualizar tempo de acesso
-    await db.update(
-      _tableCachedTiles,
-      {'acessado_em': DateTime.now().millisecondsSinceEpoch},
-      where: 'tile_hash = ?',
-      whereArgs: [tileHash],
-    );
-    
-    return result.first['file_path'] as String;
+    await _databaseLock.acquire();
+    try {
+      final db = await database;
+      final tileHash = _generateTileHash(z, x, y);
+      
+      final result = await db.query(
+        _tableCachedTiles,
+        where: 'tile_hash = ?',
+        whereArgs: [tileHash],
+        limit: 1,
+      );
+      
+      if (result.isEmpty) return null;
+      
+      // Atualizar tempo de acesso
+      await db.update(
+        _tableCachedTiles,
+        {'acessado_em': DateTime.now().millisecondsSinceEpoch},
+        where: 'tile_hash = ?',
+        whereArgs: [tileHash],
+      );
+      
+      return result.first['file_path'] as String;
+    } finally {
+      _databaseLock.release();
+    }
   }
   
   /// Obtém estatísticas de cache
   static Future<Map<String, dynamic>> getCacheStats() async {
-    final db = await database;
-    
-    // Total de tiles
-    final tileCountResult = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM $_tableCachedTiles'
-    );
-    final tileCount = (tileCountResult.first['count'] as int?) ?? 0;
-    
-    // Total de espaço
-    final sizeResult = await db.rawQuery(
-      'SELECT SUM(file_size) as total_size FROM $_tableCachedTiles'
-    );
-    final totalSize = (sizeResult.first['total_size'] as int?) ?? 0;
-    
-    // Total de áreas
-    final areaCountResult = await db.rawQuery(
-      'SELECT COUNT(*) as count FROM $_tableCacheAreas'
-    );
-    final areaCount = (areaCountResult.first['count'] as int?) ?? 0;
-    
-    return {
-      'tile_count': tileCount,
-      'total_size_mb': totalSize / (1024 * 1024),
-      'area_count': areaCount,
-      'total_size_bytes': totalSize,
-    };
+    await _databaseLock.acquire();
+    try {
+      final db = await database;
+      
+      // Total de tiles
+      final tileCountResult = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM $_tableCachedTiles'
+      );
+      final tileCount = (tileCountResult.first['count'] as int?) ?? 0;
+      
+      // Total de espaço
+      final sizeResult = await db.rawQuery(
+        'SELECT SUM(file_size) as total_size FROM $_tableCachedTiles'
+      );
+      final totalSize = (sizeResult.first['total_size'] as int?) ?? 0;
+      
+      // Total de áreas
+      final areaCountResult = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM $_tableCacheAreas'
+      );
+      final areaCount = (areaCountResult.first['count'] as int?) ?? 0;
+      
+      return {
+        'tile_count': tileCount,
+        'total_size_mb': totalSize / (1024 * 1024),
+        'area_count': areaCount,
+        'total_size_bytes': totalSize,
+      };
+    } finally {
+      _databaseLock.release();
+    }
   }
   
   /// Remove tiles não acessados por mais de X dias (LRU)
   static Future<int> cleanOldTiles({int daysOld = 30}) async {
-    final db = await database;
-    final cutoffTime = DateTime.now()
+    await _databaseLock.acquire();
+    try {
+      final db = await database;
+      final cutoffTime = DateTime.now()
         .subtract(Duration(days: daysOld))
         .millisecondsSinceEpoch;
-    
-    debugPrint('🧹 Limpando tiles não acessados há $daysOld dias...');
-    
-    final tilesToDelete = await db.query(
-      _tableCachedTiles,
-      where: 'acessado_em < ?',
-      whereArgs: [cutoffTime],
-    );
-    
-    // Deletar arquivos físicos
-    for (final tile in tilesToDelete) {
-      final filePath = tile['file_path'] as String;
-      try {
-        final file = File(filePath);
-        if (await file.exists()) {
-          await file.delete();
+      
+      debugPrint('🧹 Limpando tiles não acessados há $daysOld dias...');
+      
+      final tilesToDelete = await db.query(
+        _tableCachedTiles,
+        where: 'acessado_em < ?',
+        whereArgs: [cutoffTime],
+      );
+      
+      // Deletar arquivos físicos
+      for (final tile in tilesToDelete) {
+        final filePath = tile['file_path'] as String;
+        try {
+          final file = File(filePath);
+          if (await file.exists()) {
+            await file.delete();
+          }
+        } catch (e) {
+          debugPrint('⚠️ Erro ao deletar arquivo: $filePath - $e');
         }
-      } catch (e) {
-        debugPrint('⚠️ Erro ao deletar arquivo: $filePath - $e');
       }
+      
+      // Deletar registros do banco
+      final deleted = await db.delete(
+        _tableCachedTiles,
+        where: 'acessado_em < ?',
+        whereArgs: [cutoffTime],
+      );
+      
+      debugPrint('✅ $deleted tiles removidos');
+      return deleted;
+    } finally {
+      _databaseLock.release();
     }
-    
-    // Deletar registros do banco
-    final deleted = await db.delete(
-      _tableCachedTiles,
-      where: 'acessado_em < ?',
-      whereArgs: [cutoffTime],
-    );
-    
-    debugPrint('✅ $deleted tiles removidos');
-    return deleted;
   }
   
   /// Remove tiles até ficar sob o limite de tamanho (em MB)
   static Future<int> cleanUntilSizeLimit({int maxSizeMb = 500}) async {
-    final db = await database;
-    final maxSizeBytes = maxSizeMb * 1024 * 1024;
-    
-    debugPrint('📦 Verificando limite de tamanho: ${maxSizeMb}MB...');
-    
-    final stats = await getCacheStats();
-    final currentSize = stats['total_size_bytes'] as int;
-    
-    if (currentSize <= maxSizeBytes) {
-      debugPrint('✅ Tamanho dentro do limite');
-      return 0;
-    }
-    
-    debugPrint('⚠️ Tamanho acima do limite: ${(currentSize / 1024 / 1024).toStringAsFixed(2)}MB');
-    
-    // Obter tiles ordenados por acesso (LRU)
-    final tilesToClean = await db.query(
-      _tableCachedTiles,
-      orderBy: 'acessado_em ASC',
-    );
-    
-    int deletedCount = 0;
-    int deletedSize = 0;
-    
-    for (final tile in tilesToClean) {
-      if (currentSize - deletedSize <= maxSizeBytes) break;
+    await _databaseLock.acquire();
+    try {
+      final db = await database;
+      final maxSizeBytes = maxSizeMb * 1024 * 1024;
       
-      final filePath = tile['file_path'] as String;
-      final fileSize = tile['file_size'] as int;
+      debugPrint('📦 Verificando limite de tamanho: ${maxSizeMb}MB...');
       
-      try {
-        final file = File(filePath);
-        if (await file.exists()) {
-          await file.delete();
-        }
-        
-        await db.delete(
-          _tableCachedTiles,
-          where: 'id = ?',
-          whereArgs: [tile['id']],
-        );
-        
-        deletedCount++;
-        deletedSize += fileSize;
-      } catch (e) {
-        debugPrint('⚠️ Erro ao limpar tile: $e');
+      // Stats sem lock pois já estamos dentro do lock
+      final tileCountResult = await db.rawQuery(
+        'SELECT SUM(file_size) as total_size FROM $_tableCachedTiles'
+      );
+      final currentSize = (tileCountResult.first['total_size'] as int?) ?? 0;
+      
+      if (currentSize <= maxSizeBytes) {
+        debugPrint('✅ Tamanho dentro do limite');
+        return 0;
       }
+      
+      debugPrint('⚠️ Tamanho acima do limite: ${(currentSize / 1024 / 1024).toStringAsFixed(2)}MB');
+      
+      // Obter tiles ordenados por acesso (LRU)
+      final tilesToClean = await db.query(
+        _tableCachedTiles,
+        orderBy: 'acessado_em ASC',
+      );
+      
+      int deletedCount = 0;
+      int deletedSize = 0;
+      
+      for (final tile in tilesToClean) {
+        if (currentSize - deletedSize <= maxSizeBytes) break;
+        
+        final filePath = tile['file_path'] as String;
+        final fileSize = tile['file_size'] as int;
+        
+        try {
+          final file = File(filePath);
+          if (await file.exists()) {
+            await file.delete();
+          }
+          
+          await db.delete(
+            _tableCachedTiles,
+            where: 'id = ?',
+            whereArgs: [tile['id']],
+          );
+          
+          deletedCount++;
+          deletedSize += fileSize;
+        } catch (e) {
+          debugPrint('⚠️ Erro ao limpar tile: $e');
+        }
+      }
+      
+      debugPrint('✅ $deletedCount tiles removidos (${(deletedSize / 1024 / 1024).toStringAsFixed(2)}MB)');
+      return deletedCount;
+    } finally {
+      _databaseLock.release();
     }
-    
-    debugPrint('✅ $deletedCount tiles removidos (${(deletedSize / 1024 / 1024).toStringAsFixed(2)}MB)');
-    return deletedCount;
   }
   
   /// Fecha o banco de dados
@@ -411,5 +448,37 @@ class TileCacheDatabase {
   /// Gera hash único para um tile
   static String _generateTileHash(int z, int x, int y) {
     return '$z-$x-$y';
+  }
+}
+
+/// 🔒 Semáforo para controlar acesso ao SQLite
+/// Limita a 1 operação por vez para evitar "database is locked"
+class Semaphore {
+  final int _permits;
+  late int _available;
+  final List<Completer<void>> _waiters = [];
+  
+  Semaphore(this._permits) {
+    _available = _permits;
+  }
+  
+  Future<void> acquire() async {
+    if (_available > 0) {
+      _available--;
+      return;
+    }
+    
+    final completer = Completer<void>();
+    _waiters.add(completer);
+    await completer.future;
+  }
+  
+  void release() {
+    if (_waiters.isNotEmpty) {
+      final completer = _waiters.removeAt(0);
+      completer.complete();
+    } else {
+      _available++;
+    }
   }
 }
