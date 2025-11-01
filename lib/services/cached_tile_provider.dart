@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -113,7 +114,7 @@ class _CachedImage extends ImageProvider<_CachedImage> {
     );
   }
 
-  /// Carrega imagem de cache ou network
+  /// Carrega imagem de cache ou network com retry
   Future<ui.Codec> _loadImageAsync(ImageDecoderCallback decode) async {
     try {
       // 1️⃣ Verificar cache SQLite primeiro
@@ -127,28 +128,62 @@ class _CachedImage extends ImageProvider<_CachedImage> {
         );
       }
       
-      // 2️⃣ Se não tiver em cache, carregar do network
+      // 2️⃣ Se não tiver em cache, carregar do network com retry
       final url = 'https://tile.openstreetmap.org/$z/$x/$y.png';
       debugPrint('🌐 Tile da rede: z=$z x=$x y=$y');
       
-      final response = await http.get(Uri.parse(url)).timeout(
-        const Duration(seconds: 10),
-      );
+      http.Response? response;
+      dynamic lastError;
       
-      if (response.statusCode == 200) {
-        // ℹ️ SmartTileCacheService vai cuidar de salvar automaticamente
-        // Este provider só consome, não salva
-        return decode(
-          await ui.ImmutableBuffer.fromUint8List(response.bodyBytes),
-        );
-      } else {
-        throw Exception('HTTP ${response.statusCode}');
+      for (int attempt = 0; attempt < 3; attempt++) {
+        try {
+          response = await http.get(Uri.parse(url)).timeout(
+            const Duration(seconds: 10),
+          );
+          
+          if (response.statusCode == 200) {
+            return decode(
+              await ui.ImmutableBuffer.fromUint8List(response.bodyBytes),
+            );
+          } else if (response.statusCode == 404) {
+            throw Exception('Tile não existe (404)');
+          } else if (response.statusCode >= 500 && attempt < 2) {
+            // Server error, retry
+            lastError = 'HTTP ${response.statusCode}';
+            await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
+            continue;
+          } else {
+            throw Exception('HTTP ${response.statusCode}');
+          }
+          
+        } on SocketException catch (e) {
+          lastError = 'SocketException: ${e.message}';
+          if (attempt < 2) {
+            debugPrint('⚠️ SocketException ao carregar tile z=$z x=$x y=$y (tentativa ${attempt + 1}/3)');
+            await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
+            continue;
+          } else {
+            rethrow;
+          }
+          
+        } on TimeoutException {
+          lastError = 'TimeoutException';
+          if (attempt < 2) {
+            debugPrint('⚠️ Timeout ao carregar tile z=$z x=$x y=$y (tentativa ${attempt + 1}/3)');
+            await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
+            continue;
+          } else {
+            rethrow;
+          }
+        }
       }
+      
+      throw Exception('Falhou após 3 tentativas: $lastError');
       
     } catch (e) {
       debugPrint('❌ Erro ao carregar tile z=$z x=$x y=$y: $e');
       
-      // Retornar imagem vazia em caso de erro
+      // Retornar imagem de erro (com feedback visual)
       return _getErrorImage();
     }
   }

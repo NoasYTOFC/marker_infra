@@ -240,50 +240,96 @@ class SmartTileCacheService {
     }
   }
   
-  /// Download e cache de um tile individual
+  /// Download e cache de um tile individual com retry logic
   static Future<void> _downloadAndCacheTile({
     required int z,
     required int x,
     required int y,
     required Directory cacheDir,
+    int retries = 3,
   }) async {
     final url = _osmUrlTemplate
         .replaceAll('{z}', z.toString())
         .replaceAll('{x}', x.toString())
         .replaceAll('{y}', y.toString());
     
-    try {
-      final response = await http.get(Uri.parse(url)).timeout(
-        const Duration(seconds: 10),
-      );
-      
-      if (response.statusCode == 200) {
-        // Criar estrutura de diretórios
-        final tilePath = '${cacheDir.path}/$z/$x/$y.png';
-        final tileFile = File(tilePath);
-        
-        // Criar diretórios se não existem
-        await tileFile.parent.create(recursive: true);
-        
-        // Salvar arquivo
-        await tileFile.writeAsBytes(response.bodyBytes);
-        
-        // Registrar no banco de dados
-        await TileCacheDatabase.addCachedTile(
-          z: z,
-          x: x,
-          y: y,
-          filePath: tilePath,
-          fileSize: response.contentLength ?? response.bodyBytes.length,
+    http.Response? response;
+    dynamic lastError;
+    
+    // Retry logic com backoff exponencial
+    for (int attempt = 0; attempt < retries; attempt++) {
+      try {
+        response = await http.get(Uri.parse(url)).timeout(
+          const Duration(seconds: 10),
         );
-      } else {
-        debugPrint('⚠️ HTTP ${response.statusCode} ao baixar tile');
+        
+        if (response.statusCode == 200) {
+          // Criar estrutura de diretórios
+          final tilePath = '${cacheDir.path}/$z/$x/$y.png';
+          final tileFile = File(tilePath);
+          
+          // Criar diretórios se não existem
+          await tileFile.parent.create(recursive: true);
+          
+          // Salvar arquivo
+          await tileFile.writeAsBytes(response.bodyBytes);
+          
+          // Registrar no banco de dados
+          await TileCacheDatabase.addCachedTile(
+            z: z,
+            x: x,
+            y: y,
+            filePath: tilePath,
+            fileSize: response.contentLength ?? response.bodyBytes.length,
+          );
+          
+          return; // Sucesso!
+        } else if (response.statusCode == 404) {
+          // Tile não existe no servidor, não tentar retry
+          debugPrint('⚠️ Tile 404 (não existe): z=$z x=$x y=$y');
+          return;
+        } else if (response.statusCode >= 500) {
+          // Erro de servidor, tentar retry
+          lastError = 'HTTP ${response.statusCode}';
+          if (attempt < retries - 1) {
+            await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
+          }
+        } else {
+          // Erro cliente, não tentar retry
+          debugPrint('⚠️ HTTP ${response.statusCode} ao baixar tile z=$z x=$x y=$y');
+          return;
+        }
+        
+      } on SocketException catch (e) {
+        lastError = 'SocketException: ${e.message}';
+        debugPrint('⚠️ SocketException em z=$z x=$x y=$y (tentativa ${attempt + 1}/$retries): $e');
+        
+        if (attempt < retries - 1) {
+          // Backoff exponencial: 500ms, 1s, 2s
+          await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
+        }
+        
+      } catch (e) {
+        lastError = e.toString();
+        if (attempt < retries - 1) {
+          // Verificar se é erro de rede retentável
+          if (e.toString().contains('ClientException') ||
+              e.toString().contains('TimeoutException')) {
+            debugPrint('⚠️ Erro retentável em z=$z x=$x y=$y (tentativa ${attempt + 1}/$retries): $e');
+            await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
+          } else {
+            debugPrint('⚠️ Erro não retentável ao baixar tile z=$z x=$x y=$y: $e');
+            return;
+          }
+        } else {
+          debugPrint('⚠️ Erro não retentável ao baixar tile z=$z x=$x y=$y: $e');
+          return;
+        }
       }
-      
-    } catch (e) {
-      debugPrint('⚠️ Erro ao baixar tile: $e');
-      // Se for timeout ou erro de rede, não falhar - tentar novamente depois
     }
+    
+    // Todas as tentativas falharam
+    debugPrint('❌ Falhou após $retries tentativas para z=$z x=$x y=$y: $lastError');
   }
   
   /// Obtém diretório de cache
