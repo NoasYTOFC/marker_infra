@@ -277,7 +277,7 @@ class _CachedImage extends ImageProvider<_CachedImage> {
       debugPrint('💾 Tile cacheado on-demand: z=$z x=$x y=$y');
       
       // 5️⃣ Verificar limite de tamanho
-      await TileCacheDatabase.cleanUntilSizeLimit(maxSizeMb: 500);
+      await TileCacheDatabase.cleanUntilSizeLimit(maxSizeMb: 800);
       
     } catch (e) {
       debugPrint('❌ Erro ao salvar tile: $e');

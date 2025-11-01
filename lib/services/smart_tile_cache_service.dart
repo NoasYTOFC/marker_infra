@@ -17,7 +17,7 @@ class SmartTileCacheService {
   static Function(String message)? onStatus;
   
   // Controladores de limite
-  static const int maxCacheSizeMb = 500; // Máximo 500MB
+  static const int maxCacheSizeMb = 800; // Máximo 800MB
   static const int cleanOldTilesDays = 30; // Limpar tiles com mais de 30 dias
   
   /// Inicia cache automático para um elemento
@@ -40,25 +40,41 @@ class SmartTileCacheService {
         radiusKm: radiusKm,
       );
       
-      // Calcular tiles necessários
+      // Calcular bounds uma vez
       final bounds = _calculateBounds(posicao, radiusKm);
-      final tileCount = _calculateTileCount(
-        zoomLevel,
-        bounds['latMin']!,
-        bounds['latMax']!,
-        bounds['lonMin']!,
-        bounds['lonMax']!,
-      );
       
-      onStatus?.call('📊 $tileCount tiles para cache (${(tileCount * 60 / 1024).toStringAsFixed(2)}MB estimado)');
+      // Baixar tiles em TODOS os zooms: 15, 16, 17, 18
+      final zooms = [15, 16, 17, 18];
+      int totalTilesToDownload = 0;
       
-      // Iniciar download em background
-      _downloadTilesForArea(
-        elementoId: elementoId,
-        bounds: bounds,
-        zoomLevel: zoomLevel,
-        totalTiles: tileCount,
-      );
+      for (int zoom in zooms) {
+        final tileCount = _calculateTileCount(
+          zoom,
+          bounds['latMin']!,
+          bounds['latMax']!,
+          bounds['lonMin']!,
+          bounds['lonMax']!,
+        );
+        totalTilesToDownload += tileCount;
+      }
+      
+      onStatus?.call('📊 ~$totalTilesToDownload tiles para cache em 4 zooms (${(totalTilesToDownload * 60 / 1024).toStringAsFixed(2)}MB estimado)');
+      
+      // Iniciar download em background para todos os zooms
+      for (int zoom in zooms) {
+        _downloadTilesForArea(
+          elementoId: elementoId,
+          bounds: bounds,
+          zoomLevel: zoom,
+          totalTiles: _calculateTileCount(
+            zoom,
+            bounds['latMin']!,
+            bounds['latMax']!,
+            bounds['lonMin']!,
+            bounds['lonMax']!,
+          ),
+        );
+      }
       
     } catch (e) {
       onStatus?.call('❌ Erro ao preparar cache: $e');

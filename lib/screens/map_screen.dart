@@ -154,8 +154,8 @@ class MapScreenState extends State<MapScreen> {
             options: MapOptions(
               initialCenter: _center,
               initialZoom: 13.0,
-              minZoom: 3.0,
-              maxZoom: 21.0, // Aumentado para permitir posicionamento muito preciso
+              minZoom: 15.0, // Zoom mínimo: 15
+              maxZoom: 18.0, // Zoom máximo: 18 (com tiles em cache)
               onPositionChanged: (position, hasGesture) {
                 if (hasGesture) {
                   setState(() {
