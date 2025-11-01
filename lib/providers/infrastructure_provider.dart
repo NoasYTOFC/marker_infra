@@ -51,76 +51,9 @@ class InfrastructureProvider extends ChangeNotifier {
       _isLoaded = true;
       notifyListeners();
       
-      // ✅ Dispara cache para todos os elementos existentes
-      _initializeCacheForExistingElements();
-      
     } catch (e) {
       debugPrint('Erro ao carregar dados: $e');
     }
-  }
-  
-  /// Inicializa cache para todos os elementos já existentes no app
-  void _initializeCacheForExistingElements() {
-    debugPrint('🔄 Inicializando cache para elementos existentes...');
-    
-    // Cache para CTOs
-    for (final cto in _ctos) {
-      SmartTileCacheService.initCacheForElement(
-        elementoId: cto.id,
-        elementoTipo: 'CTO',
-        posicao: cto.posicao,
-      ).catchError((e) {
-        debugPrint('⚠️ Erro ao cachear CTO ${cto.nome}: $e');
-      });
-    }
-    
-    // Cache para OLTs
-    for (final olt in _olts) {
-      SmartTileCacheService.initCacheForElement(
-        elementoId: olt.id,
-        elementoTipo: 'OLT',
-        posicao: olt.posicao,
-      ).catchError((e) {
-        debugPrint('⚠️ Erro ao cachear OLT ${olt.nome}: $e');
-      });
-    }
-    
-    // Cache para CEOs
-    for (final ceo in _ceos) {
-      SmartTileCacheService.initCacheForElement(
-        elementoId: ceo.id,
-        elementoTipo: 'CEO',
-        posicao: ceo.posicao,
-      ).catchError((e) {
-        debugPrint('⚠️ Erro ao cachear CEO ${ceo.nome}: $e');
-      });
-    }
-    
-    // Cache para DIOs
-    for (final dio in _dios) {
-      SmartTileCacheService.initCacheForElement(
-        elementoId: dio.id,
-        elementoTipo: 'DIO',
-        posicao: dio.posicao,
-      ).catchError((e) {
-        debugPrint('⚠️ Erro ao cachear DIO ${dio.nome}: $e');
-      });
-    }
-    
-    // Cache para Cabos (usando primeiro ponto da rota)
-    for (final cabo in _cabos) {
-      if (cabo.rota.isNotEmpty) {
-        SmartTileCacheService.initCacheForElement(
-          elementoId: cabo.id,
-          elementoTipo: 'Cabo',
-          posicao: cabo.rota.first,
-        ).catchError((e) {
-          debugPrint('⚠️ Erro ao cachear Cabo ${cabo.nome}: $e');
-        });
-      }
-    }
-    
-    debugPrint('✅ Cache inicializado para ${_ctos.length} CTOs, ${_olts.length} OLTs, ${_ceos.length} CEOs, ${_dios.length} DIOs, ${_cabos.length} Cabos');
   }
 
   @override

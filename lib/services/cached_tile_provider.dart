@@ -22,6 +22,9 @@ class CachedTileProvider extends TileProvider {
   // Cache em memória para evitar muitas queries ao SQLite
   static final Map<String, String?> _memoryCache = {};
   static const int _maxMemoryCacheSize = 100;
+  
+  // Contador para cleanup (a cada 500 tiles salvos)
+  static int _tilesSavedCount = 0;
 
   CachedTileProvider();
 
@@ -276,8 +279,12 @@ class _CachedImage extends ImageProvider<_CachedImage> {
       
       debugPrint('💾 Tile cacheado on-demand: z=$z x=$x y=$y');
       
-      // 5️⃣ Verificar limite de tamanho
-      await TileCacheDatabase.cleanUntilSizeLimit(maxSizeMb: 800);
+      // 5️⃣ Limpar cache apenas a cada 500 tiles (muito mais raramente)
+      CachedTileProvider._tilesSavedCount++;
+      if (CachedTileProvider._tilesSavedCount >= 500) {
+        CachedTileProvider._tilesSavedCount = 0;
+        await TileCacheDatabase.cleanUntilSizeLimit(maxSizeMb: 800);
+      }
       
     } catch (e) {
       debugPrint('❌ Erro ao salvar tile: $e');

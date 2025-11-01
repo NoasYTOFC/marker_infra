@@ -36,6 +36,17 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
         }
+        debug {
+            // Desativar logs chatos do sistema
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
+        }
+    }
+    
+    // Suprimir logs de gralloc e outros logs de sistema chatos
+    packagingOptions {
+        exclude("DebugProbesKt.bin")
     }
 }
 

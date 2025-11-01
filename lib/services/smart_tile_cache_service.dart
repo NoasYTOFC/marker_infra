@@ -43,8 +43,8 @@ class SmartTileCacheService {
       // Calcular bounds uma vez
       final bounds = _calculateBounds(posicao, radiusKm);
       
-      // Baixar tiles em TODOS os zooms: 15, 16, 17, 18
-      final zooms = [15, 16, 17, 18];
+      // Baixar tiles em 3 ZOOMS: 15, 16, 17 (não 18, para economizar espaço)
+      final zooms = [15, 16, 17];
       int totalTilesToDownload = 0;
       
       for (int zoom in zooms) {
@@ -58,7 +58,7 @@ class SmartTileCacheService {
         totalTilesToDownload += tileCount;
       }
       
-      onStatus?.call('📊 ~$totalTilesToDownload tiles para cache em 4 zooms (${(totalTilesToDownload * 60 / 1024).toStringAsFixed(2)}MB estimado)');
+      onStatus?.call('📊 ~$totalTilesToDownload tiles para cache em 3 zooms (${(totalTilesToDownload * 60 / 1024).toStringAsFixed(2)}MB estimado)');
       
       // Iniciar download em background para todos os zooms
       for (int zoom in zooms) {
@@ -232,8 +232,8 @@ class SmartTileCacheService {
             onProgress?.call(total, totalTiles, total / totalTiles);
             onStatus?.call('⬇️ $total/$totalTiles ($skipped reutilizados) - ${percent}%');
             
-            // Verificar limite de tamanho a cada 50 tiles
-            if ((downloaded + skipped) % 50 == 0) {
+            // Verificar limite de tamanho apenas a cada 200 tiles (menos operações)
+            if ((downloaded + skipped) % 200 == 0) {
               await TileCacheDatabase.cleanUntilSizeLimit(maxSizeMb: maxCacheSizeMb);
             }
             
@@ -246,6 +246,9 @@ class SmartTileCacheService {
       
       // Atualizar count de tiles
       await TileCacheDatabase.updateTileCount(elementoId, downloaded + skipped);
+      
+      // Fazer limpeza final após download completo
+      await TileCacheDatabase.cleanUntilSizeLimit(maxSizeMb: maxCacheSizeMb);
       
       onStatus?.call('✅ Cache completo! $downloaded novos + $skipped reutilizados');
       debugPrint('✅ Cache para $elementoId: $downloaded novos tiles + $skipped reutilizados');

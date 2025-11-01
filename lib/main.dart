@@ -6,7 +6,23 @@ import 'services/file_intent_service.dart';
 import 'dart:io';
 
 void main() {
+  // Filtrar logs chatos do sistema
+  _setupLogFiltering();
   runApp(const MainApp());
+}
+
+/// Filtra logs indesejados do Android (gralloc, etc)
+void _setupLogFiltering() {
+  // Redirecionar stderr para filtrar logs específicos
+  if (Platform.isAndroid) {
+    final originalDebugPrint = debugPrint;
+    debugPrint = (String? message, {int? wrapWidth}) {
+      // Ignorar logs de gralloc e outros logs de sistema
+      if (message != null && !message.contains('gralloc') && !message.contains('SMPTE')) {
+        originalDebugPrint(message, wrapWidth: wrapWidth);
+      }
+    };
+  }
 }
 
 class MainApp extends StatefulWidget {
