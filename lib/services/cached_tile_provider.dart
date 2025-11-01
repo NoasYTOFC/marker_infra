@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'tile_cache_database.dart';
 
 /// Provider de tiles customizado que usa cache inteligente + SQLite
@@ -142,6 +143,9 @@ class _CachedImage extends ImageProvider<_CachedImage> {
           );
           
           if (response.statusCode == 200) {
+            // ✅ Salvar tile no cache para próximas vezes
+            _saveTileToCacheAsync(z, x, y, response.bodyBytes);
+            
             return decode(
               await ui.ImmutableBuffer.fromUint8List(response.bodyBytes),
             );
@@ -233,4 +237,50 @@ class _CachedImage extends ImageProvider<_CachedImage> {
 
   @override
   int get hashCode => Object.hash(z, x, y);
+  
+  /// Salva tile no cache de forma assíncrona (sem bloquear UI)
+  static void _saveTileToCacheAsync(int z, int x, int y, List<int> bytes) {
+    _saveTileToCacheDisk(z, x, y, bytes).catchError((e) {
+      debugPrint('⚠️ Erro ao salvar tile em cache: $e');
+    });
+  }
+  
+  /// Salva tile no disco de forma assíncrona
+  static Future<void> _saveTileToCacheDisk(int z, int x, int y, List<int> bytes) async {
+    try {
+      // 1️⃣ Verificar se já existe
+      final isCached = await TileCacheDatabase.isTileCached(z, x, y);
+      if (isCached) {
+        return; // Já tem, não precisa salvar novamente
+      }
+      
+      // 2️⃣ Obter diretório de cache
+      final appDir = await getApplicationSupportDirectory();
+      final cacheDir = '${appDir.path}/tile_cache';
+      
+      // 3️⃣ Salvar arquivo
+      final tilePath = '$cacheDir/$z/$x/$y.png';
+      final tileFile = File(tilePath);
+      
+      await tileFile.parent.create(recursive: true);
+      await tileFile.writeAsBytes(bytes);
+      
+      // 4️⃣ Registrar no banco de dados
+      await TileCacheDatabase.addCachedTile(
+        z: z,
+        x: x,
+        y: y,
+        filePath: tilePath,
+        fileSize: bytes.length,
+      );
+      
+      debugPrint('💾 Tile cacheado on-demand: z=$z x=$x y=$y');
+      
+      // 5️⃣ Verificar limite de tamanho
+      await TileCacheDatabase.cleanUntilSizeLimit(maxSizeMb: 500);
+      
+    } catch (e) {
+      debugPrint('❌ Erro ao salvar tile: $e');
+    }
+  }
 }
