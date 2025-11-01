@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "flutter-clean-logcat",
+      "type": "shell",
+      "command": "adb logcat --clear && adb logcat -v threadtime '*:I' gralloc4:S",
+      "isBackground": true,
+      "problemMatcher": {
+        "pattern": {
+          "regexp": "^.*$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^.*Clearing log.*",
+          "endsPattern": "^.*filter set to.*"
+        }
+      }
+    },
+    {
+      "label": "suppress-gralloc-logs",
+      "type": "shell",
+      "command": "adb logcat -v threadtime '*:V' gralloc4:S gralloc:S",
+      "isBackground": true,
+      "runOptions": {
+        "runOn": "folderOpen"
+      }
+    }
+  ]
+}

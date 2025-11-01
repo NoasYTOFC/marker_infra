@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter (Device) - Sem Gralloc Logs",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart",
+      "args": [
+        "--verbose"
+      ],
+      "cwd": "${workspaceFolder}",
+      "flutterMode": "debug",
+      "preLaunchTask": "flutter-clean-logcat"
+    },
+    {
+      "name": "Flutter",
+      "type": "dart",
+      "request": "launch",
+      "program": "lib/main.dart"
+    }
+  ]
+}
