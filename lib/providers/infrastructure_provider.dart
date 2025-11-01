@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
+import 'package:latlong2/latlong.dart';
 import 'dart:async';
 import '../models/cto_model.dart';
 import '../models/cabo_model.dart';
@@ -7,6 +8,7 @@ import '../models/olt_model.dart';
 import '../models/ceo_model.dart';
 import '../models/dio_model.dart';
 import '../services/storage_service.dart';
+import '../services/smart_tile_cache_service.dart';
 
 /// Gerenciador central de dados da infraestrutura
 class InfrastructureProvider extends ChangeNotifier {
@@ -57,6 +59,25 @@ class InfrastructureProvider extends ChangeNotifier {
   void dispose() {
     _saveDebounceTimer?.cancel();
     super.dispose();
+  }
+
+  /// Triggera cache inteligente para um elemento
+  void _triggerCacheForElement({
+    required String elementoId,
+    required String elementoTipo,
+    required double latitude,
+    required double longitude,
+    required String nome,
+  }) {
+    // Executar em background sem bloquear UI
+    SmartTileCacheService.initCacheForElement(
+      elementoId: elementoId,
+      elementoTipo: elementoTipo,
+      posicao: LatLng(latitude, longitude),
+      radiusKm: 1.0, // 1km ao redor do elemento
+    ).catchError((e) {
+      debugPrint('⚠️ Erro ao triggerar cache para $elementoTipo $nome: $e');
+    });
   }
 
   /// Salva dados automaticamente com debouncing e controle de concorrência
@@ -111,6 +132,15 @@ class InfrastructureProvider extends ChangeNotifier {
     _ctos.add(cto);
     _saveData();
     notifyListeners();
+    
+    // Triggerar cache para área ao redor da CTO
+    _triggerCacheForElement(
+      elementoId: cto.id,
+      elementoTipo: 'CTO',
+      latitude: cto.posicao.latitude,
+      longitude: cto.posicao.longitude,
+      nome: cto.nome,
+    );
   }
 
   void updateCTO(CTOModel cto) {
@@ -123,9 +153,17 @@ class InfrastructureProvider extends ChangeNotifier {
   }
 
   void removeCTO(String id) {
+    final cto = getCTO(id);
     _ctos.removeWhere((c) => c.id == id);
     _saveData();
     notifyListeners();
+    
+    // Remover cache do elemento
+    if (cto != null) {
+      SmartTileCacheService.removeCacheForElement(id).catchError((e) {
+        debugPrint('⚠️ Erro ao remover cache para CTO: $e');
+      });
+    }
   }
 
   CTOModel? getCTO(String id) {
@@ -141,6 +179,17 @@ class InfrastructureProvider extends ChangeNotifier {
     _cabos.add(cabo);
     _saveData();
     notifyListeners();
+    
+    // Triggerar cache para primeira posição do cabo
+    if (cabo.rota.isNotEmpty) {
+      _triggerCacheForElement(
+        elementoId: cabo.id,
+        elementoTipo: 'Cabo',
+        latitude: cabo.rota.first.latitude,
+        longitude: cabo.rota.first.longitude,
+        nome: cabo.nome,
+      );
+    }
   }
 
   void updateCabo(CaboModel cabo) {
@@ -156,6 +205,11 @@ class InfrastructureProvider extends ChangeNotifier {
     _cabos.removeWhere((c) => c.id == id);
     _saveData();
     notifyListeners();
+    
+    // Remover cache do elemento
+    SmartTileCacheService.removeCacheForElement(id).catchError((e) {
+      debugPrint('⚠️ Erro ao remover cache para Cabo: $e');
+    });
   }
 
   CaboModel? getCabo(String id) {
@@ -171,6 +225,15 @@ class InfrastructureProvider extends ChangeNotifier {
     _olts.add(olt);
     _saveData();
     notifyListeners();
+    
+    // Triggerar cache para OLT
+    _triggerCacheForElement(
+      elementoId: olt.id,
+      elementoTipo: 'OLT',
+      latitude: olt.posicao.latitude,
+      longitude: olt.posicao.longitude,
+      nome: olt.nome,
+    );
   }
 
   void updateOLT(OLTModel olt) {
@@ -186,6 +249,11 @@ class InfrastructureProvider extends ChangeNotifier {
     _olts.removeWhere((o) => o.id == id);
     _saveData();
     notifyListeners();
+    
+    // Remover cache do elemento
+    SmartTileCacheService.removeCacheForElement(id).catchError((e) {
+      debugPrint('⚠️ Erro ao remover cache para OLT: $e');
+    });
   }
 
   OLTModel? getOLT(String id) {
@@ -201,6 +269,15 @@ class InfrastructureProvider extends ChangeNotifier {
     _ceos.add(ceo);
     _saveData();
     notifyListeners();
+    
+    // Triggerar cache para CEO
+    _triggerCacheForElement(
+      elementoId: ceo.id,
+      elementoTipo: 'CEO',
+      latitude: ceo.posicao.latitude,
+      longitude: ceo.posicao.longitude,
+      nome: ceo.nome,
+    );
   }
 
   void updateCEO(CEOModel ceo) {
@@ -216,6 +293,11 @@ class InfrastructureProvider extends ChangeNotifier {
     _ceos.removeWhere((c) => c.id == id);
     _saveData();
     notifyListeners();
+    
+    // Remover cache do elemento
+    SmartTileCacheService.removeCacheForElement(id).catchError((e) {
+      debugPrint('⚠️ Erro ao remover cache para CEO: $e');
+    });
   }
 
   CEOModel? getCEO(String id) {
@@ -378,6 +460,15 @@ class InfrastructureProvider extends ChangeNotifier {
     _dios.add(dio);
     _saveData();
     notifyListeners();
+    
+    // Triggerar cache para DIO
+    _triggerCacheForElement(
+      elementoId: dio.id,
+      elementoTipo: 'DIO',
+      latitude: dio.posicao.latitude,
+      longitude: dio.posicao.longitude,
+      nome: dio.nome,
+    );
   }
 
   void updateDIO(DIOModel dio) {
@@ -393,6 +484,11 @@ class InfrastructureProvider extends ChangeNotifier {
     _dios.removeWhere((d) => d.id == id);
     _saveData();
     notifyListeners();
+    
+    // Remover cache do elemento
+    SmartTileCacheService.removeCacheForElement(id).catchError((e) {
+      debugPrint('⚠️ Erro ao remover cache para DIO: $e');
+    });
   }
 
   DIOModel? getDIO(String id) {
