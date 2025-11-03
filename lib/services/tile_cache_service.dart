@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
+import 'tile_cache_database.dart';
 
 /// Serviço para gerenciar cache de tiles offline
 class TileCacheService {
@@ -119,6 +120,15 @@ class TileCacheService {
         await tileFile.parent.create(recursive: true);
         // Salvar arquivo
         await tileFile.writeAsBytes(response.bodyBytes);
+        
+        // 🔑 IMPORTANTE: Registrar no banco de dados para o CachedTileProvider encontrar!
+        await TileCacheDatabase.addCachedTile(
+          z: z,
+          x: x,
+          y: y,
+          filePath: tileFile.path,
+          fileSize: response.bodyBytes.length,
+        );
       }
     } catch (e) {
       print('Erro ao fazer request do tile: $e');
@@ -127,9 +137,10 @@ class TileCacheService {
   }
 
   /// Obter diretório de cache
+  /// ✅ Usa ApplicationSupportDirectory (mesmo que CachedTileProvider)
   static Future<Directory> _getCacheDirectory() async {
-    final appDir = await getApplicationCacheDirectory();
-    final cacheDir = Directory('${appDir.path}/osm_tiles');
+    final appDir = await getApplicationSupportDirectory();
+    final cacheDir = Directory('${appDir.path}/tile_cache');
     
     if (!await cacheDir.exists()) {
       await cacheDir.create(recursive: true);
