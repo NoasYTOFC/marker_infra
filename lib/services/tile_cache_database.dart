@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:math';
 import 'dart:async';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// Serviço de persistência de cache inteligente usando SQLite
 class TileCacheDatabase {
@@ -30,9 +31,6 @@ class TileCacheDatabase {
   static Future<Database> _initDatabase() async {
     final databasesPath = await getDatabasesPath();
     final path = join(databasesPath, _dbName);
-    
-    // Deletar banco anterior para testes (remover em produção)
-    await deleteDatabase(path);
     
     debugPrint('📦 Inicializando banco de dados de cache em: $path');
     
@@ -250,12 +248,12 @@ class TileCacheDatabase {
     await _databaseLock.acquire();
     try {
       final db = await database;
-      final tileHash = _generateTileHash(z, x, y);
       
+      // Procurar por z, x, y (índice UNIQUE)
       final result = await db.query(
         _tableCachedTiles,
-        where: 'tile_hash = ?',
-        whereArgs: [tileHash],
+        where: 'z = ? AND x = ? AND y = ?',
+        whereArgs: [z, x, y],
         limit: 1,
       );
       
@@ -270,26 +268,31 @@ class TileCacheDatabase {
     await _databaseLock.acquire();
     try {
       final db = await database;
-      final tileHash = _generateTileHash(z, x, y);
       
+      // Procurar por z, x, y (índice UNIQUE)
       final result = await db.query(
         _tableCachedTiles,
-        where: 'tile_hash = ?',
-        whereArgs: [tileHash],
+        where: 'z = ? AND x = ? AND y = ?',
+        whereArgs: [z, x, y],
         limit: 1,
       );
       
-      if (result.isEmpty) return null;
+      if (result.isEmpty) {
+        debugPrint('⚠️ Tile z=$z x=$x y=$y não encontrado no banco');
+        return null;
+      }
       
       // Atualizar tempo de acesso
       await db.update(
         _tableCachedTiles,
         {'acessado_em': DateTime.now().millisecondsSinceEpoch},
-        where: 'tile_hash = ?',
-        whereArgs: [tileHash],
+        where: 'z = ? AND x = ? AND y = ?',
+        whereArgs: [z, x, y],
       );
       
-      return result.first['file_path'] as String;
+      final filePath = result.first['file_path'] as String;
+      debugPrint('✅ Encontrado no banco: $filePath');
+      return filePath;
     } finally {
       _databaseLock.release();
     }
@@ -442,6 +445,92 @@ class TileCacheDatabase {
     final db = await database;
     await db.close();
     _database = null;
+  }
+  
+  /// 🔧 Reconstrói o banco de dados a partir dos arquivos no disco
+  /// Útil para recuperar tiles que existem no disco mas não estão no banco
+  static Future<int> rebuildDatabaseFromDisk() async {
+    debugPrint('🔧 Iniciando rebuild do banco de dados...');
+    
+    await _databaseLock.acquire();
+    try {
+      final db = await database;
+      
+      // Pegar diretório de cache
+      final appDir = await getApplicationSupportDirectory();
+      final cacheDir = Directory('${appDir.path}/tile_cache');
+      
+      if (!await cacheDir.exists()) {
+        debugPrint('⚠️ Diretório de cache não existe');
+        return 0;
+      }
+      
+      int rebuildCount = 0;
+      
+      // Escanear todos os arquivos
+      await for (final zoomDir in cacheDir.list()) {
+        if (zoomDir is Directory) {
+          final z = int.tryParse(zoomDir.path.split('/').last);
+          if (z == null) continue;
+          
+          await for (final xDir in zoomDir.list()) {
+            if (xDir is Directory) {
+              final x = int.tryParse(xDir.path.split('/').last);
+              if (x == null) continue;
+              
+              await for (final file in xDir.list()) {
+                if (file is File) {
+                  final fileName = file.path.split('/').last;
+                  final y = int.tryParse(fileName.replaceAll('.png', ''));
+                  if (y == null) continue;
+                  
+                  // Verificar se já existe no banco
+                  final exists = await db.query(
+                    _tableCachedTiles,
+                    where: 'z = ? AND x = ? AND y = ?',
+                    whereArgs: [z, x, y],
+                    limit: 1,
+                  );
+                  
+                  if (exists.isEmpty) {
+                    // Não existe - adicionar ao banco
+                    final fileSize = await file.length();
+                    final now = DateTime.now().millisecondsSinceEpoch;
+                    
+                    await db.insert(
+                      _tableCachedTiles,
+                      {
+                        'z': z,
+                        'x': x,
+                        'y': y,
+                        'tile_hash': '$z-$x-$y',
+                        'file_path': file.path,
+                        'file_size': fileSize,
+                        'criado_em': now,
+                        'acessado_em': now,
+                      },
+                      conflictAlgorithm: ConflictAlgorithm.ignore,
+                    );
+                    
+                    rebuildCount++;
+                    
+                    if (rebuildCount % 100 == 0) {
+                      debugPrint('🔄 Rebuild em progresso: $rebuildCount tiles restaurados');
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      
+      debugPrint('✅ Rebuild concluído: $rebuildCount tiles restaurados do disco');
+      return rebuildCount;
+      
+    } finally {
+      _databaseLock.release();
+    }
   }
   
   // ==================== HELPERS ====================

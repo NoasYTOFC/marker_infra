@@ -4,6 +4,7 @@ import 'providers/infrastructure_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/file_intent_service.dart';
 import 'services/connectivity_service.dart';
+import 'services/tile_cache_database.dart';
 import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -12,6 +13,17 @@ void main() async {
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
+  }
+  
+  // 🔧 Reparar banco de dados na primeira inicialização
+  // Reconstrói DB a partir dos arquivos no disco
+  try {
+    final rebuildCount = await TileCacheDatabase.rebuildDatabaseFromDisk();
+    if (rebuildCount > 0) {
+      debugPrint('✅ $rebuildCount tiles recuperados do disco');
+    }
+  } catch (e) {
+    debugPrint('⚠️ Erro ao fazer rebuild do banco: $e');
   }
   
   // Iniciar monitoramento de conectividade
