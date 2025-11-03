@@ -265,36 +265,35 @@ class MapScreenState extends State<MapScreen> {
                 ),
               ),
               // Camada de labels de nomes - renderizada APÓS clusters
-              // Isso permite que os nomes tenham tamanho completo sem constrangimento de 40px
+              // Container se adapta ao tamanho do texto (mainAxisSize: MainAxisSize.min)
+              // Assim não ocupa espaço desnecessário na tela
               MarkerLayer(
                 markers: [
                   ...provider.ctos
                       .where((cto) => _isPointInViewport(cto.posicao))
                       .map((cto) => Marker(
                         point: cto.posicao,
-                        width: 200,  // Largura para o nome completo
-                        height: 20,  // Pequena altura
-                        alignment: Alignment.topCenter,  // Posicionar abaixo do icon
+                        width: 0,  // Marker invisível - apenas para posicionamento
+                        height: 0,
+                        alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 25),  // Deslocar 25px abaixo do marcador
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(3),
                               border: Border.all(color: Colors.green.withOpacity(0.5), width: 0.5),
                             ),
-                            child: Center(
-                              child: Text(
-                                cto.nome,
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.green,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            child: Text(
+                              cto.nome,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.green,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -303,29 +302,27 @@ class MapScreenState extends State<MapScreen> {
                       .where((olt) => _isPointInViewport(olt.posicao))
                       .map((olt) => Marker(
                         point: olt.posicao,
-                        width: 200,
-                        height: 20,
+                        width: 0,
+                        height: 0,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 25),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(3),
                               border: Border.all(color: Colors.red.withOpacity(0.5), width: 0.5),
                             ),
-                            child: Center(
-                              child: Text(
-                                olt.nome,
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.red,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            child: Text(
+                              olt.nome,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.red,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -334,29 +331,27 @@ class MapScreenState extends State<MapScreen> {
                       .where((ceo) => _isPointInViewport(ceo.posicao))
                       .map((ceo) => Marker(
                         point: ceo.posicao,
-                        width: 200,
-                        height: 20,
+                        width: 0,
+                        height: 0,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 25),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(3),
                               border: Border.all(color: Colors.orange.withOpacity(0.5), width: 0.5),
                             ),
-                            child: Center(
-                              child: Text(
-                                ceo.nome,
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.orange,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            child: Text(
+                              ceo.nome,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.orange,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -365,29 +360,27 @@ class MapScreenState extends State<MapScreen> {
                       .where((dio) => _isPointInViewport(dio.posicao))
                       .map((dio) => Marker(
                         point: dio.posicao,
-                        width: 200,
-                        height: 20,
+                        width: 0,
+                        height: 0,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 25),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.9),
                               borderRadius: BorderRadius.circular(3),
                               border: Border.all(color: Colors.purple.withOpacity(0.5), width: 0.5),
                             ),
-                            child: Center(
-                              child: Text(
-                                dio.nome,
-                                style: const TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.purple,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                            child: Text(
+                              dio.nome,
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.purple,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
