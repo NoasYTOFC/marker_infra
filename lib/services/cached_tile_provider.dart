@@ -25,6 +25,9 @@ class CachedTileProvider extends TileProvider {
   
   // Contador para cleanup (a cada 500 tiles salvos)
   static int _tilesSavedCount = 0;
+  
+  // Set de tiles que falharam para não fazer cache deles permanentemente
+  static final Set<String> _failedTiles = {};
 
   CachedTileProvider();
 
@@ -70,6 +73,7 @@ class CachedTileProvider extends TileProvider {
     try {
       debugPrint('🗑️ Limpando cache de tiles...');
       _memoryCache.clear();
+      _failedTiles.clear(); // Também limpar tiles que falharam
       
       // Limpar até ficar sob limite de tamanho (vai triggerar limpeza LRU)
       await TileCacheDatabase.cleanUntilSizeLimit(maxSizeMb: 0);
@@ -78,6 +82,22 @@ class CachedTileProvider extends TileProvider {
     } catch (e) {
       debugPrint('❌ Erro ao limpar cache: $e');
     }
+  }
+  
+  /// Marcar um tile como falhado para tentar novamente depois
+  static void _markTileAsFailed(int z, int x, int y) {
+    _failedTiles.add('$z-$x-$y');
+  }
+  
+  /// Verificar se um tile está marcado como falhado
+  static bool _isTileMarkedAsFailed(int z, int x, int y) {
+    return _failedTiles.contains('$z-$x-$y');
+  }
+  
+  /// Limpar tiles marcados como falhados (para tentar novamente quando conexão voltar)
+  static void clearFailedTiles() {
+    debugPrint('🔄 Limpando registro de tiles que falharam...');
+    _failedTiles.clear();
   }
 
   /// Obter estatísticas do cache
@@ -121,15 +141,20 @@ class _CachedImage extends ImageProvider<_CachedImage> {
   /// Carrega imagem de cache ou network com retry
   Future<ui.Codec> _loadImageAsync(ImageDecoderCallback decode) async {
     try {
-      // 1️⃣ Verificar cache SQLite primeiro
-      final cachedPath = await CachedTileProvider.getCachedTilePath(z, x, y);
-      
-      if (cachedPath != null && await File(cachedPath).exists()) {
-        debugPrint('💾 Tile do cache: z=$z x=$x y=$y');
-        final bytes = await File(cachedPath).readAsBytes();
-        return decode(
-          await ui.ImmutableBuffer.fromUint8List(bytes),
-        );
+      // 1️⃣ Verificar cache SQLite primeiro (mas NÃO se foi marcado como falhado)
+      if (!CachedTileProvider._failedTiles.contains('$z-$x-$y')) {
+        final cachedPath = await CachedTileProvider.getCachedTilePath(z, x, y);
+        
+        if (cachedPath != null && await File(cachedPath).exists()) {
+          debugPrint('💾 Tile do cache: z=$z x=$x y=$y');
+          final bytes = await File(cachedPath).readAsBytes();
+          return decode(
+            await ui.ImmutableBuffer.fromUint8List(bytes),
+          );
+        }
+      } else {
+        // Se foi marcado como falhado, pular cache e tentar network direto
+        debugPrint('🔄 Tile $z-$x-$y marcado como falhado, tentando network novamente...');
       }
       
       // 2️⃣ Se não tiver em cache, carregar do network com retry
@@ -148,6 +173,9 @@ class _CachedImage extends ImageProvider<_CachedImage> {
           if (response.statusCode == 200) {
             // ✅ Salvar tile no cache para próximas vezes
             _saveTileToCacheAsync(z, x, y, response.bodyBytes);
+            
+            // ✅ Remover de tiles falhados se conseguiu carregar
+            CachedTileProvider._failedTiles.remove('$z-$x-$y');
             
             return decode(
               await ui.ImmutableBuffer.fromUint8List(response.bodyBytes),
@@ -189,6 +217,9 @@ class _CachedImage extends ImageProvider<_CachedImage> {
       
     } catch (e) {
       debugPrint('❌ Erro ao carregar tile z=$z x=$x y=$y: $e');
+      
+      // ⚠️ Marcar como falhado para tentar novamente quando tiver conexão
+      CachedTileProvider._markTileAsFailed(z, x, y);
       
       // Retornar imagem de erro (com feedback visual)
       return _getErrorImage();
