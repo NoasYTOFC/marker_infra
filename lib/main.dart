@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/infrastructure_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/file_intent_service.dart';
+import 'services/connectivity_service.dart';
 import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -12,6 +13,9 @@ void main() async {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
+  
+  // Iniciar monitoramento de conectividade
+  ConnectivityService().startMonitoring();
   
   // Filtrar logs chatos do sistema
   _setupLogFiltering();
