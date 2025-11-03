@@ -231,7 +231,7 @@ class MapScreenState extends State<MapScreen> {
                     provider.olts.length + 
                     provider.ceos.length + 
                     provider.dios.length,
-                  ).toInt(),
+                  ).round(),
                   size: const Size(40, 40),
                   markers: [
                     // VIEWPORT CULLING: Renderizar apenas elementos na tela + margem
@@ -1232,7 +1232,8 @@ class MapScreenState extends State<MapScreen> {
                 size: 32,
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                constraints: const BoxConstraints(maxWidth: 120),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(4),
@@ -1347,7 +1348,8 @@ class MapScreenState extends State<MapScreen> {
                 size: 32,
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                constraints: const BoxConstraints(maxWidth: 120),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(4),
@@ -1466,7 +1468,8 @@ class MapScreenState extends State<MapScreen> {
                 size: 32,
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                constraints: const BoxConstraints(maxWidth: 120),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(4),
@@ -1585,7 +1588,8 @@ class MapScreenState extends State<MapScreen> {
                 size: 32,
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                constraints: const BoxConstraints(maxWidth: 120),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(4),
@@ -1822,31 +1826,30 @@ class MapScreenState extends State<MapScreen> {
 
   /// Calcula raio de clustering DINÂMICO baseado em zoom + quantidade de itens
   double _calculateDynamicClusterRadius(int totalItems) {
-    // Sem clustering em zoom muito alto (zoom 15+)
-    if (_currentZoom >= 15) {
+    // Desabilitar clustering em zoom muito alto (zoom 17+)
+    if (_currentZoom >= 17) {
       return 0; // Nenhum clustering
     }
     
-    // ALTAMENTE SENSÍVEL: Agrupa itens MUITO próximos (apenas àqueles que não são cabos)
-    // Quantidade de itens que queremos visíveis em um cluster
-    final itensPorCluster = 1.0; // MÁXIMA sensibilidade - agrupa apenas itens muito próximos
+    // SENSÍVEL: Agrupa itens muito próximos
+    final itensPorCluster = 2.0;
     final cluster = (totalItems / itensPorCluster).ceil();
     
-    // Matriz de clustering por zoom - ULTRA AGRESSIVA para itens muito próximos
+    // Matriz de clustering por zoom
     if (_currentZoom < 10) {
-      // Zoom muito baixo: clustering agressivo apenas para itens muito próximos
-      return math.min(80.0, 40.0 + (cluster * 1.5).toDouble()); // Reduzido
+      // Zoom muito baixo: clustering agressivo
+      return math.min(200.0, 100.0 + (cluster * 2.0).toDouble());
     } else if (_currentZoom < 12) {
       // Zoom baixo: clustering moderado
-      return math.min(70.0, 35.0 + (cluster * 1.3).toDouble()); // Reduzido
-    } else if (_currentZoom < 13) {
-      // Zoom médio-baixo: clustering leve
-      return math.min(60.0, 30.0 + (cluster * 1.0).toDouble()); // Reduzido
+      return math.min(150.0, 80.0 + (cluster * 1.5).toDouble());
     } else if (_currentZoom < 14) {
-      // Zoom médio: clustering muito leve
-      return math.min(40.0, 20.0 + (cluster * 0.5).toDouble()); // Reduzido
+      // Zoom médio: clustering leve
+      return math.min(100.0, 50.0 + (cluster * 1.0).toDouble());
+    } else if (_currentZoom < 16) {
+      // Zoom alto: clustering bem leve
+      return math.min(60.0, 30.0 + (cluster * 0.5).toDouble());
     } else {
-      // Zoom alto: sem clustering
+      // Zoom muito alto: sem clustering
       return 0;
     }
   }
