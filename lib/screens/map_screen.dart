@@ -272,8 +272,8 @@ class MapScreenState extends State<MapScreen> {
                       .where((cto) => _isPointInViewport(cto.posicao))
                       .map((cto) => Marker(
                         point: cto.posicao,
-                        width: 1,  // Bem pequeno - apenas para posicionamento
-                        height: 1,
+                        width: 80,
+                        height: 24,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 32),  // Deslocar 32px abaixo do marcador
@@ -301,8 +301,8 @@ class MapScreenState extends State<MapScreen> {
                       .where((olt) => _isPointInViewport(olt.posicao))
                       .map((olt) => Marker(
                         point: olt.posicao,
-                        width: 1,
-                        height: 1,
+                        width: 80,
+                        height: 24,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 32),
@@ -330,8 +330,8 @@ class MapScreenState extends State<MapScreen> {
                       .where((ceo) => _isPointInViewport(ceo.posicao))
                       .map((ceo) => Marker(
                         point: ceo.posicao,
-                        width: 1,
-                        height: 1,
+                        width: 80,
+                        height: 24,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 32),
@@ -359,8 +359,8 @@ class MapScreenState extends State<MapScreen> {
                       .where((dio) => _isPointInViewport(dio.posicao))
                       .map((dio) => Marker(
                         point: dio.posicao,
-                        width: 1,
-                        height: 1,
+                        width: 80,
+                        height: 24,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 32),
