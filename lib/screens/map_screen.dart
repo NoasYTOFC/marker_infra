@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_marker_cluster/flutter_map_marker_cluster.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 import '../providers/infrastructure_provider.dart';
 import '../models/cto_model.dart';
@@ -581,6 +582,7 @@ class MapScreenState extends State<MapScreen> {
                             onPressed: () {
                               // Abrir link em navegador
                               print('Abrir: https://www.openstreetmap.org/copyright');
+                              launchUrl(Uri.parse('https://www.openstreetmap.org/copyright'));
                             },
                             child: Text(
                               'www.openstreetmap.org/copyright',
@@ -1243,7 +1245,7 @@ class MapScreenState extends State<MapScreen> {
                   child: Text(
                     cto.nome,
                     style: const TextStyle(
-                      fontSize: 8,
+                      fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: Colors.green,
                     ),
@@ -1362,7 +1364,7 @@ class MapScreenState extends State<MapScreen> {
                   child: Text(
                     olt.nome,
                     style: const TextStyle(
-                      fontSize: 8,
+                      fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: Colors.red,
                     ),
@@ -1485,7 +1487,7 @@ class MapScreenState extends State<MapScreen> {
                   child: Text(
                     ceo.nome,
                     style: const TextStyle(
-                      fontSize: 8,
+                      fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: Colors.orange,
                     ),
@@ -1608,7 +1610,7 @@ class MapScreenState extends State<MapScreen> {
                   child: Text(
                     dio.nome,
                     style: const TextStyle(
-                      fontSize: 8,
+                      fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: Colors.purple,
                     ),
