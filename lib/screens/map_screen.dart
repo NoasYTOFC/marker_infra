@@ -973,7 +973,7 @@ class MapScreenState extends State<MapScreen> {
       point: cto.posicao,
       width: 60,
       height: 50,  // Aumentado para acomodar label
-      alignment: Alignment.topCenter,
+      alignment: Alignment(0, -0.4), // Centro 15px abaixo do topCenter
       child: IgnorePointer(
         ignoring: _positionPicker.isActive,
         child: GestureDetector(
@@ -1098,7 +1098,7 @@ class MapScreenState extends State<MapScreen> {
       point: olt.posicao,
       width: 60,
       height: 50,  // Aumentado para acomodar label
-      alignment: Alignment.topCenter,
+      alignment: Alignment(0, -0.4), // Centro 15px abaixo do topCenter
       child: IgnorePointer(
         ignoring: _positionPicker.isActive,
         child: GestureDetector(
@@ -1218,7 +1218,7 @@ class MapScreenState extends State<MapScreen> {
       point: ceo.posicao,
       width: 60,
       height: 50,  // Aumentado para acomodar label
-      alignment: Alignment.topCenter,
+      alignment: Alignment(0, -0.4), // Centro 15px abaixo do topCenter
       child: IgnorePointer(
         ignoring: _positionPicker.isActive,
         child: GestureDetector(
@@ -1341,7 +1341,7 @@ class MapScreenState extends State<MapScreen> {
       point: dio.posicao,
       width: 60,
       height: 50,  // Aumentado para acomodar label
-      alignment: Alignment.topCenter,
+      alignment: Alignment(0, -0.4), // Centro 15px abaixo do topCenter
       child: IgnorePointer(
         ignoring: _positionPicker.isActive,
         child: GestureDetector(
