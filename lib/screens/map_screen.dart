@@ -264,6 +264,136 @@ class MapScreenState extends State<MapScreen> {
                   },
                 ),
               ),
+              // Camada de labels de nomes - renderizada APÓS clusters
+              // Isso permite que os nomes tenham tamanho completo sem constrangimento de 40px
+              MarkerLayer(
+                markers: [
+                  ...provider.ctos
+                      .where((cto) => _isPointInViewport(cto.posicao))
+                      .map((cto) => Marker(
+                        point: cto.posicao,
+                        width: 200,  // Largura para o nome completo
+                        height: 20,  // Pequena altura
+                        alignment: Alignment.topCenter,  // Posicionar abaixo do icon
+                        child: Transform.translate(
+                          offset: const Offset(0, 25),  // Deslocar 25px abaixo do marcador
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(3),
+                              border: Border.all(color: Colors.green.withOpacity(0.5), width: 0.5),
+                            ),
+                            child: Center(
+                              child: Text(
+                                cto.nome,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.green,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )),
+                  ...provider.olts
+                      .where((olt) => _isPointInViewport(olt.posicao))
+                      .map((olt) => Marker(
+                        point: olt.posicao,
+                        width: 200,
+                        height: 20,
+                        alignment: Alignment.topCenter,
+                        child: Transform.translate(
+                          offset: const Offset(0, 25),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(3),
+                              border: Border.all(color: Colors.red.withOpacity(0.5), width: 0.5),
+                            ),
+                            child: Center(
+                              child: Text(
+                                olt.nome,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.red,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )),
+                  ...provider.ceos
+                      .where((ceo) => _isPointInViewport(ceo.posicao))
+                      .map((ceo) => Marker(
+                        point: ceo.posicao,
+                        width: 200,
+                        height: 20,
+                        alignment: Alignment.topCenter,
+                        child: Transform.translate(
+                          offset: const Offset(0, 25),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(3),
+                              border: Border.all(color: Colors.orange.withOpacity(0.5), width: 0.5),
+                            ),
+                            child: Center(
+                              child: Text(
+                                ceo.nome,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.orange,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )),
+                  ...provider.dios
+                      .where((dio) => _isPointInViewport(dio.posicao))
+                      .map((dio) => Marker(
+                        point: dio.posicao,
+                        width: 200,
+                        height: 20,
+                        alignment: Alignment.topCenter,
+                        child: Transform.translate(
+                          offset: const Offset(0, 25),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(3),
+                              border: Border.all(color: Colors.purple.withOpacity(0.5), width: 0.5),
+                            ),
+                            child: Center(
+                              child: Text(
+                                dio.nome,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.purple,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ),
+                        ),
+                      )),
+                ].toList(),
+              ),
               // Pontos de medição
               if (_measurementTool.points.isNotEmpty)
                 MarkerLayer(
@@ -1223,33 +1353,10 @@ class MapScreenState extends State<MapScreen> {
                   ],
                 )
               : null,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.router,
-                color: Colors.green,
-                size: 32,
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                constraints: const BoxConstraints(maxWidth: 180),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.green, width: 1),
-                ),
-                child: Text(
-                  cto.nome,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+          child: const Icon(
+            Icons.router,
+            color: Colors.green,
+            size: 32,
           ),
         ),
       ),
@@ -1339,33 +1446,10 @@ class MapScreenState extends State<MapScreen> {
                   boxShadow: [BoxShadow(color: Colors.red.withOpacity(0.8), blurRadius: 12, spreadRadius: 4)],
                 )
               : null,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.dns,
-                color: Colors.red,
-                size: 32,
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                constraints: const BoxConstraints(maxWidth: 180),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.red, width: 1),
-                ),
-                child: Text(
-                  olt.nome,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+          child: const Icon(
+            Icons.dns,
+            color: Colors.red,
+            size: 32,
           ),
         ),
       ),
@@ -1459,33 +1543,10 @@ class MapScreenState extends State<MapScreen> {
                   boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.8), blurRadius: 12, spreadRadius: 4)],
                 )
               : null,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.settings_ethernet,
-                color: Colors.orange,
-                size: 32,
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                constraints: const BoxConstraints(maxWidth: 180),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.orange, width: 1),
-                ),
-                child: Text(
-                  ceo.nome,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.orange,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+          child: const Icon(
+            Icons.settings_ethernet,
+            color: Colors.orange,
+            size: 32,
           ),
         ),
       ),
@@ -1579,33 +1640,10 @@ class MapScreenState extends State<MapScreen> {
                   boxShadow: [BoxShadow(color: Colors.purple.withOpacity(0.8), blurRadius: 12, spreadRadius: 4)],
                 )
               : null,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.hub,
-                color: Colors.purple,
-                size: 32,
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                constraints: const BoxConstraints(maxWidth: 180),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: Colors.purple, width: 1),
-                ),
-                child: Text(
-                  dio.nome,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.purple,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+          child: const Icon(
+            Icons.hub,
+            color: Colors.purple,
+            size: 32,
           ),
         ),
       ),
