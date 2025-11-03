@@ -89,14 +89,21 @@ class CachedTileProvider extends TileProvider {
     _failedTiles.add('$z-$x-$y');
   }
   
-  /// Verificar se um tile está marcado como falhado
-  static bool _isTileMarkedAsFailed(int z, int x, int y) {
-    return _failedTiles.contains('$z-$x-$y');
-  }
   
   /// Limpar tiles marcados como falhados (para tentar novamente quando conexão voltar)
   static void clearFailedTiles() {
     debugPrint('🔄 Limpando registro de tiles que falharam...');
+    
+    // Também remover do cache de imagens do Flutter para forçar reload
+    for (String tileKey in _failedTiles) {
+      try {
+        final cacheKey = 'osm_tile_$tileKey';
+        imageCache.evict(NetworkImage(cacheKey));
+      } catch (e) {
+        // Ignorar se não estiver no cache
+      }
+    }
+    
     _failedTiles.clear();
   }
 
@@ -221,43 +228,11 @@ class _CachedImage extends ImageProvider<_CachedImage> {
       // ⚠️ Marcar como falhado para tentar novamente quando tiver conexão
       CachedTileProvider._markTileAsFailed(z, x, y);
       
-      // Retornar imagem de erro (com feedback visual)
-      return _getErrorImage();
+      // 🔴 IMPORTANTE: Não retornar imagem de erro! Se retornarmos uma imagem,
+      // o Flutter Map vai cachear como "sucesso" e nunca mais tentará carregar.
+      // Ao invés disso, relançar a exceção para que o Flutter Map saiba que falhou.
+      rethrow;
     }
-  }
-
-  /// Gera imagem vazia para erro
-  Future<ui.Codec> _getErrorImage() async {
-    final picoder = ui.PictureRecorder();
-    final canvas = Canvas(picoder);
-    
-    // Desenhar fundo cinza escuro
-    canvas.drawRect(
-      const Rect.fromLTWH(0, 0, 256, 256),
-      Paint()..color = const Color.fromARGB(255, 64, 64, 64),
-    );
-    
-    // Desenhar X
-    canvas.drawLine(
-      const Offset(0, 0),
-      const Offset(256, 256),
-      Paint()
-        ..color = Colors.red
-        ..strokeWidth = 4,
-    );
-    canvas.drawLine(
-      const Offset(256, 0),
-      const Offset(0, 256),
-      Paint()
-        ..color = Colors.red
-        ..strokeWidth = 4,
-    );
-    
-    final picture = picoder.endRecording();
-    final image = await picture.toImage(256, 256);
-    final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
-    
-    return ui.instantiateImageCodec(bytes!.buffer.asUint8List());
   }
 
   @override

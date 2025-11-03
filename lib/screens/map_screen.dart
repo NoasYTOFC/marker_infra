@@ -17,6 +17,7 @@ import '../widgets/element_details_sheet.dart';
 import '../widgets/coordinate_search_dialog.dart';
 import '../services/permission_service.dart';
 import '../services/cached_tile_provider.dart';
+import '../services/connectivity_service.dart';
 import 'cto_form_screen.dart';
 import 'olt_form_screen.dart';
 import 'cabo_form_screen.dart';
@@ -139,6 +140,45 @@ class MapScreenState extends State<MapScreen> {
     });
     // Notificar que position picker ficou ativo
     widget.onPositionPickerModeChanged?.call(true);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Registrar listener para mudanças de conectividade
+    ConnectivityService().addListener(_onConnectivityChanged);
+  }
+
+  void _onConnectivityChanged(bool isConnected) {
+    if (isConnected && mounted) {
+      debugPrint('🔄 Reconectado! Fazendo refresh da mapa...');
+      // Fazer um pequeno "bounce" de zoom para forçar rebuild e recarregar tiles
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          final currentZoom = _mapController.camera.zoom;
+          _mapController.move(
+            _mapController.camera.center,
+            currentZoom + 0.01, // Zoom in um pouco
+          );
+          // Desfazer o zoom
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) {
+              _mapController.move(
+                _mapController.camera.center,
+                currentZoom, // Voltar ao zoom original
+              );
+            }
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    // Remover listener de conectividade
+    ConnectivityService().removeListener(_onConnectivityChanged);
   }
 
   @override
