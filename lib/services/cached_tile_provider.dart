@@ -152,12 +152,22 @@ class _CachedImage extends ImageProvider<_CachedImage> {
       if (!CachedTileProvider._failedTiles.contains('$z-$x-$y')) {
         final cachedPath = await CachedTileProvider.getCachedTilePath(z, x, y);
         
-        if (cachedPath != null && await File(cachedPath).exists()) {
-          debugPrint('💾 Tile do cache: z=$z x=$x y=$y');
-          final bytes = await File(cachedPath).readAsBytes();
-          return decode(
-            await ui.ImmutableBuffer.fromUint8List(bytes),
-          );
+        if (cachedPath != null) {
+          final file = File(cachedPath);
+          final fileExists = await file.exists();
+          
+          if (fileExists) {
+            debugPrint('✅ Tile encontrado no cache: $cachedPath');
+            final bytes = await file.readAsBytes();
+            debugPrint('📦 Loaded ${bytes.length} bytes de cache');
+            return decode(
+              await ui.ImmutableBuffer.fromUint8List(bytes),
+            );
+          } else {
+            debugPrint('⚠️ Arquivo do cache não existe: $cachedPath (banco desatualizado?)');
+          }
+        } else {
+          debugPrint('⚠️ Tile não está no cache de dados: z=$z x=$x y=$y');
         }
       } else {
         // Se foi marcado como falhado, pular cache e tentar network direto
@@ -265,24 +275,29 @@ class _CachedImage extends ImageProvider<_CachedImage> {
   /// Salva tile no disco de forma assíncrona
   static Future<void> _saveTileToCacheDisk(int z, int x, int y, List<int> bytes) async {
     try {
-      // 1️⃣ Verificar se já existe
-      final isCached = await TileCacheDatabase.isTileCached(z, x, y);
-      if (isCached) {
-        return; // Já tem, não precisa salvar novamente
-      }
-      
-      // 2️⃣ Obter diretório de cache
+      // 1️⃣ Obter diretório de cache
       final appDir = await getApplicationSupportDirectory();
       final cacheDir = '${appDir.path}/tile_cache';
-      
-      // 3️⃣ Salvar arquivo
       final tilePath = '$cacheDir/$z/$x/$y.png';
-      final tileFile = File(tilePath);
       
+      // 2️⃣ Verificar se arquivo já existe no disco
+      final tileFile = File(tilePath);
+      final fileExists = await tileFile.exists();
+      
+      // 3️⃣ Verificar se já existe no banco de dados
+      final isCachedInDb = await TileCacheDatabase.isTileCached(z, x, y);
+      
+      // Se arquivo existe e está registrado no DB, não precisa salvar novamente
+      if (fileExists && isCachedInDb) {
+        return;
+      }
+      
+      // 4️⃣ Salvar arquivo no disco
       await tileFile.parent.create(recursive: true);
       await tileFile.writeAsBytes(bytes);
+      debugPrint('💾 Arquivo salvo: $tilePath (${bytes.length} bytes)');
       
-      // 4️⃣ Registrar no banco de dados
+      // 5️⃣ Registrar no banco de dados
       await TileCacheDatabase.addCachedTile(
         z: z,
         x: x,
@@ -290,18 +305,18 @@ class _CachedImage extends ImageProvider<_CachedImage> {
         filePath: tilePath,
         fileSize: bytes.length,
       );
+      debugPrint('� Registrado no DB: z=$z x=$x y=$y');
       
-      debugPrint('💾 Tile cacheado on-demand: z=$z x=$x y=$y');
-      
-      // 5️⃣ Limpar cache apenas a cada 500 tiles (muito mais raramente)
+      // 6️⃣ Limpar cache apenas a cada 500 tiles (muito mais raramente)
       CachedTileProvider._tilesSavedCount++;
       if (CachedTileProvider._tilesSavedCount >= 500) {
         CachedTileProvider._tilesSavedCount = 0;
+        debugPrint('🧹 Limpando cache para manter limite de tamanho...');
         await TileCacheDatabase.cleanUntilSizeLimit(maxSizeMb: 800);
       }
       
     } catch (e) {
-      debugPrint('❌ Erro ao salvar tile: $e');
+      debugPrint('❌ Erro ao salvar tile z=$z x=$x y=$y: $e');
     }
   }
 }
