@@ -1395,18 +1395,16 @@ class MapScreenState extends State<MapScreen> {
     
     return Marker(
       point: olt.posicao,
-      width: 40,
-      height: 30,
-      alignment: Alignment.center, // Centralizar no meio do marcador
+      width: 60,
+      height: 50,  // Aumentado para acomodar label
+      alignment: Alignment.topCenter,
       child: IgnorePointer(
-        ignoring: _positionPicker.isActive, // Transparente ao toque se picker ativo
+        ignoring: _positionPicker.isActive,
         child: GestureDetector(
           onLongPressStart: (details) {
-            // Se está em modo de edição, começar drag
             _startDraggingPoint(olt.posicao);
           },
           onLongPressMoveUpdate: (details) {
-            // Durante drag, atualizar posição
             if (_isDragging) {
               try {
                 final point = _mapController.camera.pointToLatLng(
@@ -1419,13 +1417,11 @@ class MapScreenState extends State<MapScreen> {
             }
           },
           onLongPressEnd: (details) {
-            // Finalizar drag
             if (_isDragging) {
               _endDragging();
             }
           },
           onTap: () {
-            // Se em modo medição, adicionar o ponto do elemento
             if (_measurementTool.isActive) {
               setState(() {
                 _measurementTool.addPoint(olt.posicao);
@@ -1448,13 +1444,12 @@ class MapScreenState extends State<MapScreen> {
                     onRequestPositionPick: () {
                       print('DEBUG map_screen: onRequestPositionPick CHAMADO!');
                       print('DEBUG map_screen: Chamando startPositionPicking(OLT) com ID ${olt.id}');
-                      Navigator.pop(context); // Fechar formulário
+                      Navigator.pop(context);
                       startPositionPicking('OLT', editingId: olt.id);
                     },
                   ),
                 ),
               ).then((_) {
-                // Após retornar do formulário, fechar o sheet para reabri-lo com dados atualizados
                 Navigator.pop(context);
               });
             },
@@ -1464,19 +1459,50 @@ class MapScreenState extends State<MapScreen> {
             },
           );
         },
-        child: Container(
-          decoration: isHighlighted
-              ? BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.red.withOpacity(0.3),
-                  boxShadow: [BoxShadow(color: Colors.red.withOpacity(0.8), blurRadius: 12, spreadRadius: 4)],
-                )
-              : null,
-          child: const Icon(
-            Icons.dns,
-            color: Colors.red,
-            size: 32,
-          ),
+        child: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            // Ícone
+            Container(
+              decoration: isHighlighted
+                  ? BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.red.withOpacity(0.3),
+                      boxShadow: [BoxShadow(color: Colors.red.withOpacity(0.8), blurRadius: 12, spreadRadius: 4)],
+                    )
+                  : null,
+              child: const Icon(
+                Icons.dns,
+                color: Colors.red,
+                size: 32,
+              ),
+            ),
+            // Label
+            Positioned(
+              top: 32,
+              child: Container(
+                width: 60,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(2),
+                  border: Border.all(color: Colors.red.withOpacity(0.5), width: 0.5),
+                ),
+                child: Center(
+                  child: Text(
+                    olt.nome,
+                    style: const TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.red,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       ), // Fecha IgnorePointer
@@ -1489,18 +1515,16 @@ class MapScreenState extends State<MapScreen> {
     
     return Marker(
       point: ceo.posicao,
-      width: 40,
-      height: 30,
-      alignment: Alignment.center, // Centralizar no meio do marcador
+      width: 60,
+      height: 50,  // Aumentado para acomodar label
+      alignment: Alignment.topCenter,
       child: IgnorePointer(
-        ignoring: _positionPicker.isActive, // Transparente ao toque se picker ativo
+        ignoring: _positionPicker.isActive,
         child: GestureDetector(
           onLongPressStart: (details) {
-            // Se está em modo de edição, começar drag
             _startDraggingPoint(ceo.posicao);
           },
           onLongPressMoveUpdate: (details) {
-            // Durante drag, atualizar posição
             if (_isDragging) {
               try {
                 final point = _mapController.camera.pointToLatLng(
@@ -1513,13 +1537,11 @@ class MapScreenState extends State<MapScreen> {
             }
           },
           onLongPressEnd: (details) {
-            // Finalizar drag
             if (_isDragging) {
               _endDragging();
             }
           },
           onTap: () {
-            // Se em modo medição, adicionar o ponto do elemento
             if (_measurementTool.isActive) {
               setState(() {
                 _measurementTool.addPoint(ceo.posicao);
@@ -1541,13 +1563,12 @@ class MapScreenState extends State<MapScreen> {
                     onRequestPositionPick: () {
                       print('DEBUG map_screen: onRequestPositionPick CHAMADO!');
                       print('DEBUG map_screen: Chamando startPositionPicking(CEO) com ID ${ceo.id}');
-                      Navigator.pop(context); // Fechar formulário
+                      Navigator.pop(context);
                       startPositionPicking('CEO', editingId: ceo.id);
                     },
                   ),
                 ),
               ).then((_) {
-                // Após retornar do formulário, fechar o sheet para reabri-lo com dados atualizados
                 Navigator.pop(context);
               });
             },
@@ -1561,19 +1582,50 @@ class MapScreenState extends State<MapScreen> {
             },
           );
         },
-        child: Container(
-          decoration: isHighlighted
-              ? BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.orange.withOpacity(0.3),
-                  boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.8), blurRadius: 12, spreadRadius: 4)],
-                )
-              : null,
-          child: const Icon(
-            Icons.settings_ethernet,
-            color: Colors.orange,
-            size: 32,
-          ),
+        child: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            // Ícone
+            Container(
+              decoration: isHighlighted
+                  ? BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.orange.withOpacity(0.3),
+                      boxShadow: [BoxShadow(color: Colors.orange.withOpacity(0.8), blurRadius: 12, spreadRadius: 4)],
+                    )
+                  : null,
+              child: const Icon(
+                Icons.settings_ethernet,
+                color: Colors.orange,
+                size: 32,
+              ),
+            ),
+            // Label
+            Positioned(
+              top: 32,
+              child: Container(
+                width: 60,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(2),
+                  border: Border.all(color: Colors.orange.withOpacity(0.5), width: 0.5),
+                ),
+                child: Center(
+                  child: Text(
+                    ceo.nome,
+                    style: const TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.orange,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       ), // Fecha IgnorePointer
@@ -1586,18 +1638,16 @@ class MapScreenState extends State<MapScreen> {
     
     return Marker(
       point: dio.posicao,
-      width: 40,
-      height: 30,
-      alignment: Alignment.center, // Centralizar no meio do marcador
+      width: 60,
+      height: 50,  // Aumentado para acomodar label
+      alignment: Alignment.topCenter,
       child: IgnorePointer(
-        ignoring: _positionPicker.isActive, // Transparente ao toque se picker ativo
+        ignoring: _positionPicker.isActive,
         child: GestureDetector(
           onLongPressStart: (details) {
-            // Se está em modo de edição, começar drag
             _startDraggingPoint(dio.posicao);
           },
           onLongPressMoveUpdate: (details) {
-            // Durante drag, atualizar posição
             if (_isDragging) {
               try {
                 final point = _mapController.camera.pointToLatLng(
@@ -1610,13 +1660,11 @@ class MapScreenState extends State<MapScreen> {
             }
           },
           onLongPressEnd: (details) {
-            // Finalizar drag
             if (_isDragging) {
               _endDragging();
             }
           },
           onTap: () {
-            // Se em modo medição, adicionar o ponto do elemento
             if (_measurementTool.isActive) {
               setState(() {
                 _measurementTool.addPoint(dio.posicao);
@@ -1638,13 +1686,12 @@ class MapScreenState extends State<MapScreen> {
                     onRequestPositionPick: () {
                       print('DEBUG map_screen: onRequestPositionPick CHAMADO!');
                       print('DEBUG map_screen: Chamando startPositionPicking(DIO) com ID ${dio.id}');
-                      Navigator.pop(context); // Fechar formulário
+                      Navigator.pop(context);
                       startPositionPicking('DIO', editingId: dio.id);
                     },
                   ),
                 ),
               ).then((_) {
-                // Após retornar do formulário, fechar o sheet para reabri-lo com dados atualizados
                 Navigator.pop(context);
               });
             },
@@ -1658,19 +1705,50 @@ class MapScreenState extends State<MapScreen> {
             },
           );
         },
-        child: Container(
-          decoration: isHighlighted
-              ? BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.purple.withOpacity(0.3),
-                  boxShadow: [BoxShadow(color: Colors.purple.withOpacity(0.8), blurRadius: 12, spreadRadius: 4)],
-                )
-              : null,
-          child: const Icon(
-            Icons.hub,
-            color: Colors.purple,
-            size: 32,
-          ),
+        child: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            // Ícone
+            Container(
+              decoration: isHighlighted
+                  ? BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.purple.withOpacity(0.3),
+                      boxShadow: [BoxShadow(color: Colors.purple.withOpacity(0.8), blurRadius: 12, spreadRadius: 4)],
+                    )
+                  : null,
+              child: const Icon(
+                Icons.hub,
+                color: Colors.purple,
+                size: 32,
+              ),
+            ),
+            // Label
+            Positioned(
+              top: 32,
+              child: Container(
+                width: 60,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(2),
+                  border: Border.all(color: Colors.purple.withOpacity(0.5), width: 0.5),
+                ),
+                child: Center(
+                  child: Text(
+                    dio.nome,
+                    style: const TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.purple,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       ), // Fecha IgnorePointer
