@@ -31,7 +31,7 @@ class TileCacheDatabase {
     final path = join(databasesPath, _dbName);
     
     // Deletar banco anterior para testes (remover em produção)
-    // await deleteDatabase(path);
+    await deleteDatabase(path);
     
     debugPrint('📦 Inicializando banco de dados de cache em: $path');
     
@@ -77,7 +77,7 @@ class TileCacheDatabase {
         z INTEGER NOT NULL,
         x INTEGER NOT NULL,
         y INTEGER NOT NULL,
-        tile_hash TEXT NOT NULL UNIQUE,
+        tile_hash TEXT,
         file_path TEXT NOT NULL,
         file_size INTEGER NOT NULL,
         criado_em INTEGER NOT NULL,
@@ -87,10 +87,10 @@ class TileCacheDatabase {
     
     // Índices para busca rápida
     await db.execute(
-      'CREATE INDEX idx_tile_hash ON $_tableCachedTiles(tile_hash)'
+      'CREATE UNIQUE INDEX idx_z_x_y ON $_tableCachedTiles(z, x, y)'
     );
     await db.execute(
-      'CREATE INDEX idx_z_x_y ON $_tableCachedTiles(z, x, y)'
+      'CREATE INDEX idx_tile_hash ON $_tableCachedTiles(tile_hash)'
     );
     
     debugPrint('✅ Tabelas criadas com sucesso');
