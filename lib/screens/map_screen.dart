@@ -272,8 +272,8 @@ class MapScreenState extends State<MapScreen> {
                       .where((cto) => _isPointInViewport(cto.posicao))
                       .map((cto) => Marker(
                         point: cto.posicao,
-                        width: 80,
-                        height: 24,
+                        width: 60,
+                        height: 16,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 32),  // Deslocar 32px abaixo do marcador
@@ -284,15 +284,17 @@ class MapScreenState extends State<MapScreen> {
                               borderRadius: BorderRadius.circular(2),
                               border: Border.all(color: Colors.green.withOpacity(0.5), width: 0.5),
                             ),
-                            child: Text(
-                              cto.nome,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.green,
+                            child: Center(
+                              child: Text(
+                                cto.nome,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.green,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -301,8 +303,8 @@ class MapScreenState extends State<MapScreen> {
                       .where((olt) => _isPointInViewport(olt.posicao))
                       .map((olt) => Marker(
                         point: olt.posicao,
-                        width: 80,
-                        height: 24,
+                        width: 60,
+                        height: 16,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 32),
@@ -313,15 +315,17 @@ class MapScreenState extends State<MapScreen> {
                               borderRadius: BorderRadius.circular(2),
                               border: Border.all(color: Colors.red.withOpacity(0.5), width: 0.5),
                             ),
-                            child: Text(
-                              olt.nome,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.red,
+                            child: Center(
+                              child: Text(
+                                olt.nome,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.red,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -330,8 +334,8 @@ class MapScreenState extends State<MapScreen> {
                       .where((ceo) => _isPointInViewport(ceo.posicao))
                       .map((ceo) => Marker(
                         point: ceo.posicao,
-                        width: 80,
-                        height: 24,
+                        width: 60,
+                        height: 16,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 32),
@@ -342,15 +346,17 @@ class MapScreenState extends State<MapScreen> {
                               borderRadius: BorderRadius.circular(2),
                               border: Border.all(color: Colors.orange.withOpacity(0.5), width: 0.5),
                             ),
-                            child: Text(
-                              ceo.nome,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.orange,
+                            child: Center(
+                              child: Text(
+                                ceo.nome,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.orange,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -359,8 +365,8 @@ class MapScreenState extends State<MapScreen> {
                       .where((dio) => _isPointInViewport(dio.posicao))
                       .map((dio) => Marker(
                         point: dio.posicao,
-                        width: 80,
-                        height: 24,
+                        width: 60,
+                        height: 16,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 32),
@@ -371,15 +377,17 @@ class MapScreenState extends State<MapScreen> {
                               borderRadius: BorderRadius.circular(2),
                               border: Border.all(color: Colors.purple.withOpacity(0.5), width: 0.5),
                             ),
-                            child: Text(
-                              dio.nome,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.purple,
+                            child: Center(
+                              child: Text(
+                                dio.nome,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.purple,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ),
@@ -1262,18 +1270,16 @@ class MapScreenState extends State<MapScreen> {
     
     return Marker(
       point: cto.posicao,
-      width: 40,
-      height: 30,
-      alignment: Alignment.center, // Centralizar no meio do marcador
+      width: 60,
+      height: 50,  // Aumentado para acomodar label
+      alignment: Alignment.topCenter,
       child: IgnorePointer(
-        ignoring: _positionPicker.isActive, // Transparente ao toque se picker ativo
+        ignoring: _positionPicker.isActive,
         child: GestureDetector(
           onLongPressStart: (details) {
-            // Se está em modo de edição, começar drag
             _startDraggingPoint(cto.posicao);
           },
           onLongPressMoveUpdate: (details) {
-            // Durante drag, atualizar posição
             if (_isDragging) {
               try {
                 final point = _mapController.camera.pointToLatLng(
@@ -1286,13 +1292,11 @@ class MapScreenState extends State<MapScreen> {
             }
           },
           onLongPressEnd: (details) {
-            // Finalizar drag
             if (_isDragging) {
               _endDragging();
             }
           },
           onTap: () {
-            // Se em modo medição, adicionar o ponto do elemento
             if (_measurementTool.isActive) {
               setState(() {
                 _measurementTool.addPoint(cto.posicao);
@@ -1315,13 +1319,12 @@ class MapScreenState extends State<MapScreen> {
                     onRequestPositionPick: () {
                       print('DEBUG map_screen: onRequestPositionPick CHAMADO!');
                       print('DEBUG map_screen: Chamando startPositionPicking(CTO) com ID ${cto.id}');
-                      Navigator.pop(context); // Fechar formulário
+                      Navigator.pop(context);
                       startPositionPicking('CTO', editingId: cto.id);
                     },
                   ),
                 ),
               ).then((_) {
-                // Após retornar do formulário, fechar o sheet para reabri-lo com dados atualizados
                 Navigator.pop(context);
               });
             },
@@ -1331,25 +1334,56 @@ class MapScreenState extends State<MapScreen> {
             },
           );
         },
-        child: Container(
-          decoration: isHighlighted
-              ? BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.green.withOpacity(0.3),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.green.withOpacity(0.8),
-                      blurRadius: 12,
-                      spreadRadius: 4,
+        child: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            // Ícone
+            Container(
+              decoration: isHighlighted
+                  ? BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.green.withOpacity(0.3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.green.withOpacity(0.8),
+                          blurRadius: 12,
+                          spreadRadius: 4,
+                        ),
+                      ],
+                    )
+                  : null,
+              child: const Icon(
+                Icons.router,
+                color: Colors.green,
+                size: 32,
+              ),
+            ),
+            // Label
+            Positioned(
+              top: 32,
+              child: Container(
+                width: 60,
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.9),
+                  borderRadius: BorderRadius.circular(2),
+                  border: Border.all(color: Colors.green.withOpacity(0.5), width: 0.5),
+                ),
+                child: Center(
+                  child: Text(
+                    cto.nome,
+                    style: const TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.green,
                     ),
-                  ],
-                )
-              : null,
-          child: const Icon(
-            Icons.router,
-            color: Colors.green,
-            size: 32,
-          ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       ), // Fecha IgnorePointer
