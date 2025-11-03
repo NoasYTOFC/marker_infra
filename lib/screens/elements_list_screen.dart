@@ -142,20 +142,49 @@ class _ElementsListScreenState extends State<ElementsListScreen>
         // Barra com botão de deletar selecionados
         if (totalSelecionados > 0)
           Container(
-            color: Colors.orange[50],
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.amber[900]
+                  : Colors.amber[50],
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.amber[700]!
+                      : Colors.amber[200]!,
+                  width: 2,
+                ),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Texto do topo
+                // Texto do topo com contador destacado
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(
-                    '$totalSelecionados selecionado${totalSelecionados > 1 ? 's' : ''}',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: MediaQuery.of(context).size.width > 600 ? 14 : 12,
-                    ),
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Colors.amber[300]
+                            : Colors.amber[700],
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          '$totalSelecionados selecionado${totalSelecionados > 1 ? 's' : ''}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: MediaQuery.of(context).size.width > 600 ? 16 : 14,
+                            color: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.amber[100]
+                                : Colors.amber[900],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 // Botões em linha com scroll horizontal
@@ -166,46 +195,55 @@ class _ElementsListScreenState extends State<ElementsListScreen>
                     children: [
                       // Botão Select All
                       SizedBox(
-                        height: 36,
-                        child: TextButton.icon(
+                        height: 40,
+                        child: ElevatedButton.icon(
                           icon: const Icon(Icons.select_all, size: 18),
-                          label: const Text('Selecionar tudo', style: TextStyle(fontSize: 11)),
+                          label: const Text('Selecionar tudo', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
                           onPressed: () => _selecionarTodosFiltrados(context, _searchController.text),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.blue,
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            elevation: 2,
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       SizedBox(
-                        height: 36,
-                        child: TextButton.icon(
+                        height: 40,
+                        child: ElevatedButton.icon(
                           icon: const Icon(Icons.edit, size: 18),
-                          label: const Text('Editar', style: TextStyle(fontSize: 11)),
+                          label: const Text('Editar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
                           onPressed: () => _showBulkEditDialog(context),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.orange,
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            elevation: 2,
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       SizedBox(
-                        height: 36,
-                        child: TextButton.icon(
+                        height: 40,
+                        child: ElevatedButton.icon(
                           icon: const Icon(Icons.delete_sweep, size: 18),
-                          label: const Text('Deletar', style: TextStyle(fontSize: 11)),
+                          label: const Text('Deletar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
                           onPressed: () => _confirmBulkDelete(context),
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red[600],
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            elevation: 2,
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       SizedBox(
-                        height: 36,
-                        child: TextButton.icon(
+                        height: 40,
+                        child: OutlinedButton.icon(
                           icon: const Icon(Icons.clear, size: 18),
-                          label: const Text('Deselecionar', style: TextStyle(fontSize: 11)),
+                          label: const Text('Deselecionar', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
                           onPressed: () {
                             setState(() {
                               _selectedCTOs.clear();
@@ -215,9 +253,17 @@ class _ElementsListScreenState extends State<ElementsListScreen>
                               _selectedCabos.clear();
                             });
                           },
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.grey,
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Theme.of(context).brightness == Brightness.dark
+                                ? Colors.amber[100]
+                                : Colors.amber[800],
+                            side: BorderSide(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.amber[100]!
+                                  : Colors.amber[400]!,
+                              width: 1.5,
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
                           ),
                         ),
                       ),
@@ -229,29 +275,54 @@ class _ElementsListScreenState extends State<ElementsListScreen>
           )
         else
           Container(
-            color: Colors.blue[50],
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.blue[900]
+                  : Colors.blue[50],
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.blue[700]!
+                      : Colors.blue[200]!,
+                  width: 1,
+                ),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             child: Row(
               children: [
+                Icon(
+                  Icons.list,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.blue[300]
+                      : Colors.blue[700],
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     '${provider.ctos.length + provider.olts.length + provider.ceos.length + provider.dios.length + provider.cabos.length} elemento${(provider.ctos.length + provider.olts.length + provider.ceos.length + provider.dios.length + provider.cabos.length) > 1 ? 's' : ''} total',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: MediaQuery.of(context).size.width > 600 ? 14 : 12,
+                      fontSize: MediaQuery.of(context).size.width > 600 ? 15 : 13,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.blue[100]
+                          : Colors.blue[900],
                     ),
                   ),
                 ),
                 // Botão Select All
                 SizedBox(
-                  height: 36,
-                  child: TextButton.icon(
+                  height: 40,
+                  child: ElevatedButton.icon(
                     icon: const Icon(Icons.select_all, size: 18),
-                    label: const Text('Selecionar tudo', style: TextStyle(fontSize: 11)),
+                    label: const Text('Selecionar tudo', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
                     onPressed: () => _selecionarTodosFiltrados(context, _searchController.text),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      elevation: 2,
                     ),
                   ),
                 ),

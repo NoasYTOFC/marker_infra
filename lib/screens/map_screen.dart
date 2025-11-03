@@ -384,35 +384,6 @@ class MapScreenState extends State<MapScreen> {
                           ),
                         ),
                       )),
-                  ...provider.cabos
-                      .where((cabo) => cabo.rota.isNotEmpty && _isPointInViewport(cabo.rota.first))
-                      .map((cabo) => Marker(
-                        point: cabo.rota.first,  // Usar primeiro ponto da rota
-                        width: 1,
-                        height: 1,
-                        alignment: Alignment.topCenter,
-                        child: Transform.translate(
-                          offset: const Offset(0, 32),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(2),
-                              border: Border.all(color: Colors.blue.withOpacity(0.5), width: 0.5),
-                            ),
-                            child: Text(
-                              cabo.nome,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w400,
-                                color: Colors.blue,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      )),
                 ].toList(),
               ),
               // Pontos de medição
