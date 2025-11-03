@@ -36,11 +36,6 @@ class TileCacheDatabase {
     
     debugPrint('📦 Inicializando banco de dados de cache em: $path');
     
-    // Para Windows/Linux/macOS, usar FFI
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      databaseFactory = databaseFactoryFfi;
-    }
-    
     return await openDatabase(
       path,
       version: _dbVersion,

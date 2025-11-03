@@ -6,10 +6,11 @@ import 'services/file_intent_service.dart';
 import 'dart:io';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-void main() {
-  // Inicializar sqflite FFI para Windows/Linux/macOS
+void main() async {
+  // ⚠️ CRÍTICO: Inicializar sqflite FFI ANTES de tudo para Windows/Linux/macOS
   if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
   }
   
   // Filtrar logs chatos do sistema
