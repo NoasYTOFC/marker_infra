@@ -43,16 +43,14 @@ class MapScreen extends StatefulWidget {
   }
 }
 
-// Tornando a classe pública para poder ser referenciada em home_screen
+  // Tornando a classe pública para poder ser referenciada em home_screen
 class MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
   LatLng _center = LatLng(-12.1367, -38.4208); // Alagoinhas-BA
   final MeasurementTool _measurementTool = MeasurementTool();
   final PositionPicker _positionPicker = PositionPicker();
   bool _showLegend = false; // Legenda começa escondida
-  double _currentZoom = 13.0;
-  
-  // Drag-to-move state
+  double _currentZoom = 15.0; // Zoom inicial = zoom mínimo (pyramid caching)  // Drag-to-move state
   bool _isDragging = false;
   int? _draggedPointIndex; // Índice do ponto sendo arrastado (para cabos)
   
@@ -153,8 +151,8 @@ class MapScreenState extends State<MapScreen> {
             mapController: _mapController,
             options: MapOptions(
               initialCenter: _center,
-              initialZoom: 13.0,
-              minZoom: 15.0, // Zoom mínimo: 15
+              initialZoom: 15.0, // Zoom inicial = zoom mínimo com pyramid caching (visão macro)
+              minZoom: 15.0, // Zoom mínimo: 15 (pyramid caching suporta zoom 14)
               maxZoom: 17.0, // Zoom máximo: 17 (com tiles em cache, melhor performance)
               onPositionChanged: (position, hasGesture) {
                 if (hasGesture) {

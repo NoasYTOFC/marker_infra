@@ -9,8 +9,11 @@ import 'tile_cache_database.dart';
 /// Serviço inteligente de cache de tiles baseado em localização de elementos
 class SmartTileCacheService {
   static const String _osmUrlTemplate = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-  static const double _defaultRadiusKm = 3.0; // Raio padrão: 3km ao redor de elementos
+  static const double _defaultRadiusKm = 5.0; // Raio padrão: 5km ao redor de elementos (expandido com pyramid caching)
   static const int _defaultZoomLevel = 17; // Zoom padrão para cache
+  
+  // Pyramid Caching: zoom 14 em grande área (visão macro), zooms 15-17 em raio normal
+  static const double _pyramidRadiusKm = 20.0; // Raio para zoom 14 de baixa resolução
   
   // Callbacks para progresso
   static Function(int current, int total, double percent)? onProgress;
@@ -43,11 +46,25 @@ class SmartTileCacheService {
       // Calcular bounds uma vez
       final bounds = _calculateBounds(posicao, radiusKm);
       
-      // Baixar tiles em 3 ZOOMS: 15, 16, 17 (não 18, para economizar espaço)
-      final zooms = [15, 16, 17];
+      // Pyramid Caching: Zoom 14 em grande área + Zooms 15-17 em raio normal
+      final pyramidBounds = _calculateBounds(posicao, _pyramidRadiusKm);
+      
+      // Zoom 14: visão macro em grande raio (economiza espaço, ~100 tiles)
+      // Zooms 15-17: detalhe completo em raio padrão
       int totalTilesToDownload = 0;
       
-      for (int zoom in zooms) {
+      // Calcular zoom 14 em grande área
+      final zoom14Count = _calculateTileCount(
+        14,
+        pyramidBounds['latMin']!,
+        pyramidBounds['latMax']!,
+        pyramidBounds['lonMin']!,
+        pyramidBounds['lonMax']!,
+      );
+      totalTilesToDownload += zoom14Count;
+      
+      // Calcular zooms 15-17 em raio normal
+      for (int zoom in [15, 16, 17]) {
         final tileCount = _calculateTileCount(
           zoom,
           bounds['latMin']!,
@@ -58,10 +75,19 @@ class SmartTileCacheService {
         totalTilesToDownload += tileCount;
       }
       
-      onStatus?.call('📊 ~$totalTilesToDownload tiles para cache em 3 zooms (${(totalTilesToDownload * 60 / 1024).toStringAsFixed(2)}MB estimado)');
+      onStatus?.call('📊 ~$totalTilesToDownload tiles para cache em 4 zooms (${(totalTilesToDownload * 60 / 1024).toStringAsFixed(2)}MB estimado)');
       
       // Iniciar download em background para todos os zooms
-      for (int zoom in zooms) {
+      // Zoom 14 em grande raio (pyramid caching)
+      _downloadTilesForArea(
+        elementoId: elementoId,
+        bounds: pyramidBounds,
+        zoomLevel: 14,
+        totalTiles: zoom14Count,
+      );
+      
+      // Zooms 15-17 em raio normal
+      for (int zoom in [15, 16, 17]) {
         _downloadTilesForArea(
           elementoId: elementoId,
           bounds: bounds,

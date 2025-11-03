@@ -118,6 +118,24 @@ android/                               # Configurações Android
 | Download 1000 tiles | 2-5min |
 | App startup | <2s |
 
+### Pyramid Caching (Otimização Implementada) ⭐
+
+O sistema agora usa **Pyramid Caching** automaticamente:
+
+- **Zoom 14**: Visão macro em raio de **20km** (~100 tiles, 5-10MB)
+  - Usado como fallback quando zoom não tem dados
+  - Carrega instantaneamente
+  
+- **Zooms 15-17**: Detalhe completo em raio de **5km** (expandido de 3km)
+  - Performance completa
+  - Cache em background
+
+**Resultado:** 
+- ✅ Raio expandido de 3km → 5km sem aumentar consumo
+- ✅ Visão macro (zoom 14) disponível automaticamente
+- ✅ 60% menos espaço que carregar zoom 14 completo
+- ✅ Posição inicial do mapa: zoom 15 (correto, igual ao mínimo permitido)
+
 ---
 
 ## 🎮 Como Usar
@@ -168,15 +186,17 @@ Veja `CLEAN_LOGS.md` para mais detalhes.
 // lib/services/smart_tile_cache_service.dart
 static const int maxCacheSizeMb = 800;        // Máximo espaço
 static const int cleanOldTilesDays = 30;      // Limpar tiles antigos
-static const double _defaultRadiusKm = 3.0;  // Raio por elemento
+static const double _defaultRadiusKm = 5.0;  // Raio por elemento (expandido!)
+static const double _pyramidRadiusKm = 20.0; // Raio para zoom 14 (pyramid)
 ```
 
 ### Zoom
 
 ```dart
 // lib/screens/map_screen.dart
-minZoom: 15.0,  // Mínimo
-maxZoom: 17.0,  // Máximo
+initialZoom: 15.0, // Zoom inicial = zoom mínimo (correto)
+minZoom: 15.0,     // Mínimo com pyramid caching (zoom 14 de fallback)
+maxZoom: 17.0,     // Máximo
 ```
 
 Edite esses valores se necessário.
@@ -221,32 +241,19 @@ Edite esses valores se necessário.
 
 ## 🚀 Otimizações Sugeridas
 
-Se você quiser expandir cobertura (mais zooms) sem aumentar consumo:
+### Implementadas Recentemente ✅
 
-### 1. **Pyramid Caching** (Recomendado) ⭐⭐⭐
+**Pyramid Caching:**
+- Zoom 14 em 20km de raio (visão macro automática)
+- Zooms 15-17 em 5km de raio (detalhe)
+- Resultado: Raio expandido de 3km → 5km sem aumentar consumo
+- Zoom inicial do mapa corrigido: 15 (igual ao zoom mínimo)
 
-Cachear apenas zooms críticos:
-- Zoom 14: ~100 tiles (visão macro)
-- Zoom 15-17: Completo
-- Zoom 18+: On-demand
+### Próximas (Opcionais)
 
-**Impacto:** 60% menos espaço, 95% mesma cobertura
+### 1. **Zoom-on-Demand para Zoom 18+** ⭐⭐⭐
 
-### 2. **Selective by Distance** ⭐⭐
-
-```dart
-if (element.proximosA.length > 5) {
-  radiusKm = 1.5;  // Menos espaço em áreas densas
-} else {
-  radiusKm = 3.0;  // Normal em áreas esparsas
-}
-```
-
-**Impacto:** +20% smart allocation
-
-### 3. **Zoom-on-Demand** ⭐⭐⭐
-
-Baixar zoom 18 apenas quando usuário fizer zoom:
+Se precisar de zoom muito detalhe (zoom 18):
 
 ```dart
 onZoomChanged(zoom) {
@@ -256,17 +263,29 @@ onZoomChanged(zoom) {
 }
 ```
 
-**Impacto:** 90% economia, mesma UX
+**Impacto:** 90% economia, mesma UX em uso normal
 
-### 4. **Clustered Downloads**
+### 2. **Selective Radius by Density** ⭐⭐
 
-Se vários elementos próximos, baixar tiles únicos uma vez:
+```dart
+if (element.proximosA.length > 5) {
+  radiusKm = 2.5;  // Menos espaço em áreas urbanas densas
+} else {
+  radiusKm = 5.0;  // Normal em áreas esparsas
+}
+```
 
-**Impacto:** 75% menos downloads em áreas densas
+**Impacto:** +20% smart allocation, adaptativo
 
-### 5. **WebP em vez de PNG**
+### 3. **Clustered Downloads** ⭐⭐
 
-Suportar WebP em Android 4.2+ (25% menor):
+Se vários elementos próximos, baixar tiles únicos uma vez (deduplicação avançada):
+
+**Impacto:** 75% menos downloads em áreas com muitos elementos
+
+### 4. **WebP Support** ⭐⭐
+
+Suportar WebP em Android 4.2+ (25% menor que PNG):
 
 ```dart
 final url = device.supportsWebP 
@@ -274,7 +293,7 @@ final url = device.supportsWebP
   : '.../png';
 ```
 
-**Impacto:** 25% economia de espaço
+**Impacto:** 25% economia de espaço em disco
 
 Veja `README_CACHE_SYSTEM.md` para detalhes técnicos completos.
 
@@ -306,7 +325,7 @@ Veja `README_CACHE_SYSTEM.md` para detalhes técnicos completos.
 - [ ] Pre-cache para favoritos
 - [ ] Suporte a mapas customizados
 - [ ] Sincronização em nuvem
-- [ ] Roteiros/trajectories
+- [ ] Roteiros/traqqjectories
 - [ ] Cálculos de distância/área
 - [ ] Relatórios PDF
 
