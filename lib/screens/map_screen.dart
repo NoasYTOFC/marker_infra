@@ -153,7 +153,7 @@ class MapScreenState extends State<MapScreen> {
               initialCenter: _center,
               initialZoom: 15.0, // Zoom inicial = zoom mínimo com pyramid caching (visão macro)
               minZoom: 15.0, // Zoom mínimo: 15 (pyramid caching suporta zoom 14)
-              maxZoom: 17.0, // Zoom máximo: 17 (com tiles em cache, melhor performance)
+              maxZoom: 21.0, // Zoom máximo: 21 (liberdade total, tiles on-demand após 17)
               onPositionChanged: (position, hasGesture) {
                 if (hasGesture) {
                   setState(() {
@@ -1140,8 +1140,8 @@ class MapScreenState extends State<MapScreen> {
     
     return Marker(
       point: cto.posicao,
-      width: 80,
-      height: 60,
+      width: 40,
+      height: 30,
       alignment: Alignment.center, // Centralizar no meio do marcador
       child: IgnorePointer(
         ignoring: _positionPicker.isActive, // Transparente ao toque se picker ativo
@@ -1261,8 +1261,8 @@ class MapScreenState extends State<MapScreen> {
     
     return Marker(
       point: olt.posicao,
-      width: 80,
-      height: 60,
+      width: 40,
+      height: 30,
       alignment: Alignment.center, // Centralizar no meio do marcador
       child: IgnorePointer(
         ignoring: _positionPicker.isActive, // Transparente ao toque se picker ativo
@@ -1377,8 +1377,8 @@ class MapScreenState extends State<MapScreen> {
     
     return Marker(
       point: ceo.posicao,
-      width: 80,
-      height: 60,
+      width: 40,
+      height: 30,
       alignment: Alignment.center, // Centralizar no meio do marcador
       child: IgnorePointer(
         ignoring: _positionPicker.isActive, // Transparente ao toque se picker ativo
@@ -1496,8 +1496,8 @@ class MapScreenState extends State<MapScreen> {
     
     return Marker(
       point: dio.posicao,
-      width: 80,
-      height: 60,
+      width: 40,
+      height: 30,
       alignment: Alignment.center, // Centralizar no meio do marcador
       child: IgnorePointer(
         ignoring: _positionPicker.isActive, // Transparente ao toque se picker ativo
@@ -1822,29 +1822,29 @@ class MapScreenState extends State<MapScreen> {
 
   /// Calcula raio de clustering DINÂMICO baseado em zoom + quantidade de itens
   double _calculateDynamicClusterRadius(int totalItems) {
-    // Sem clustering em zoom muito alto
+    // Sem clustering em zoom muito alto (zoom 15+)
     if (_currentZoom >= 15) {
       return 0; // Nenhum clustering
     }
     
-    // Calcular densidade: quanto mais itens, maior o clustering
+    // ALTAMENTE SENSÍVEL: Agrupa itens MUITO próximos (apenas àqueles que não são cabos)
     // Quantidade de itens que queremos visíveis em um cluster
-    final itensPorCluster = 2.0; // REDUZIDO para 2 - MÁXIMA sensibilidade
+    final itensPorCluster = 1.0; // MÁXIMA sensibilidade - agrupa apenas itens muito próximos
     final cluster = (totalItems / itensPorCluster).ceil();
     
-    // Matriz de clustering por zoom - AUMENTADO para MÁXIMA sensibilidade
+    // Matriz de clustering por zoom - ULTRA AGRESSIVA para itens muito próximos
     if (_currentZoom < 10) {
-      // Zoom muito baixo: clustering muito agressivo
-      return math.min(250.0, 150.0 + (cluster * 4.0).toDouble());
+      // Zoom muito baixo: clustering agressivo apenas para itens muito próximos
+      return math.min(80.0, 40.0 + (cluster * 1.5).toDouble()); // Reduzido
     } else if (_currentZoom < 12) {
-      // Zoom baixo: clustering agressivo
-      return math.min(200.0, 120.0 + (cluster * 3.5).toDouble());
+      // Zoom baixo: clustering moderado
+      return math.min(70.0, 35.0 + (cluster * 1.3).toDouble()); // Reduzido
     } else if (_currentZoom < 13) {
-      // Zoom médio-baixo: clustering moderado
-      return math.min(150.0, 90.0 + (cluster * 2.0).toDouble());
+      // Zoom médio-baixo: clustering leve
+      return math.min(60.0, 30.0 + (cluster * 1.0).toDouble()); // Reduzido
     } else if (_currentZoom < 14) {
-      // Zoom médio: clustering leve
-      return math.min(100.0, 60.0 + (cluster * 1.2).toDouble());
+      // Zoom médio: clustering muito leve
+      return math.min(40.0, 20.0 + (cluster * 0.5).toDouble()); // Reduzido
     } else {
       // Zoom alto: sem clustering
       return 0;

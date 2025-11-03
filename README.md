@@ -25,8 +25,9 @@
 ### Pré-requisitos
 
 - Flutter 3.9.2+
-- Android SDK (mínimo API 21)
-- Dispositivo Android ou emulador
+- Android SDK (mínimo API 21) para Android
+- Windows 10+ com Visual Studio (para Windows)
+- Dispositivo/emulador Android ou Windows
 
 ### Instalação
 
@@ -118,7 +119,7 @@ android/                               # Configurações Android
 | Download 1000 tiles | 2-5min |
 | App startup | <2s |
 
-### Pyramid Caching (Otimização Implementada) ⭐
+### Pyramid Caching (Otimização Implementada) ⭐⭐⭐
 
 O sistema agora usa **Pyramid Caching** automaticamente:
 
@@ -130,11 +131,19 @@ O sistema agora usa **Pyramid Caching** automaticamente:
   - Performance completa
   - Cache em background
 
-**Resultado:** 
-- ✅ Raio expandido de 3km → 5km sem aumentar consumo
+**Resultado implementado (Nov 2025):**
+- ✅ Raio expandido de 3km → 5km **sem aumentar consumo**
 - ✅ Visão macro (zoom 14) disponível automaticamente
 - ✅ 60% menos espaço que carregar zoom 14 completo
-- ✅ Posição inicial do mapa: zoom 15 (correto, igual ao mínimo permitido)
+- ✅ Posição inicial do mapa: zoom 15 (correto, igual ao mínimo)
+- ✅ **Windows agora totalmente suportado** com sqflite FFI
+
+**Otimizações no código:**
+1. Schema de banco corrigido (UNIQUE em z-x-y, não em tile_hash)
+2. sqflite FFI inicializado corretamente para Windows/Linux/macOS
+3. Suporte completo a múltiplos tiles na mesma área (pyramid)
+
+---
 
 ---
 
