@@ -225,13 +225,21 @@ class _CachedImage extends ImageProvider<_CachedImage> {
     } catch (e) {
       debugPrint('❌ Erro ao carregar tile z=$z x=$x y=$y: $e');
       
-      // ⚠️ Marcar como falhado para tentar novamente quando tiver conexão
-      CachedTileProvider._markTileAsFailed(z, x, y);
+      // ⚠️ IMPORTANTE: Diferenciar entre erros de rede e erros reais
+      // - Erros de rede (SocketException, TimeoutException): NÃO marcar como falhado
+      //   Deixar o Flutter Map retornar e tentar novamente quando tiver conexão
+      // - Erros reais (HTTP error, arquivo corrompido): Marcar como falhado
       
-      // 🔴 IMPORTANTE: Não retornar imagem de erro! Se retornarmos uma imagem,
-      // o Flutter Map vai cachear como "sucesso" e nunca mais tentará carregar.
-      // Ao invés disso, relançar a exceção para que o Flutter Map saiba que falhou.
-      rethrow;
+      if (e is SocketException || e is TimeoutException) {
+        // Erro de rede - não marcar como falhado, apenas relançar
+        debugPrint('📡 Erro de rede (será retentado automaticamente quando tiver conexão)');
+        rethrow;
+      } else {
+        // Erro real - marcar como falhado
+        debugPrint('🔴 Erro real (marcando tile como falhado para retry quando conectar)');
+        CachedTileProvider._markTileAsFailed(z, x, y);
+        rethrow;
+      }
     }
   }
 
