@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'dart:math';
 import 'dart:async';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 /// Serviço de persistência de cache inteligente usando SQLite
 class TileCacheDatabase {
@@ -34,6 +35,11 @@ class TileCacheDatabase {
     await deleteDatabase(path);
     
     debugPrint('📦 Inicializando banco de dados de cache em: $path');
+    
+    // Para Windows/Linux/macOS, usar FFI
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      databaseFactory = databaseFactoryFfi;
+    }
     
     return await openDatabase(
       path,

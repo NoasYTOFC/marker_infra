@@ -4,8 +4,14 @@ import 'providers/infrastructure_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/file_intent_service.dart';
 import 'dart:io';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
+  // Inicializar sqflite FFI para Windows/Linux/macOS
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    sqfliteFfiInit();
+  }
+  
   // Filtrar logs chatos do sistema
   _setupLogFiltering();
   runApp(const MainApp());
