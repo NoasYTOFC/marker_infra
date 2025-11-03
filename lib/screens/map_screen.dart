@@ -265,35 +265,37 @@ class MapScreenState extends State<MapScreen> {
                 ),
               ),
               // Camada de labels de nomes - renderizada APÓS clusters
-              // Container se adapta ao tamanho do texto (mainAxisSize: MainAxisSize.min)
-              // Assim não ocupa espaço desnecessário na tela
+              // Container se adapta ao tamanho do texto
+              // Não ocupa mais espaço que o necessário
               MarkerLayer(
                 markers: [
                   ...provider.ctos
                       .where((cto) => _isPointInViewport(cto.posicao))
                       .map((cto) => Marker(
                         point: cto.posicao,
-                        width: 0,  // Marker invisível - apenas para posicionamento
-                        height: 0,
+                        width: 120,  // Largura mínima permitida
+                        height: 24,  // Altura mínima para renderizar
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 25),  // Deslocar 25px abaixo do marcador
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(3),
-                              border: Border.all(color: Colors.green.withOpacity(0.5), width: 0.5),
-                            ),
-                            child: Text(
-                              cto.nome,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.green,
+                          child: IntrinsicWidth(  // Adapta à largura do texto
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(3),
+                                border: Border.all(color: Colors.green.withOpacity(0.5), width: 0.5),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              child: Text(
+                                cto.nome,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.green,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                         ),
@@ -302,27 +304,29 @@ class MapScreenState extends State<MapScreen> {
                       .where((olt) => _isPointInViewport(olt.posicao))
                       .map((olt) => Marker(
                         point: olt.posicao,
-                        width: 0,
-                        height: 0,
+                        width: 120,
+                        height: 24,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 25),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(3),
-                              border: Border.all(color: Colors.red.withOpacity(0.5), width: 0.5),
-                            ),
-                            child: Text(
-                              olt.nome,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.red,
+                          child: IntrinsicWidth(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(3),
+                                border: Border.all(color: Colors.red.withOpacity(0.5), width: 0.5),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              child: Text(
+                                olt.nome,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.red,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                         ),
@@ -331,27 +335,29 @@ class MapScreenState extends State<MapScreen> {
                       .where((ceo) => _isPointInViewport(ceo.posicao))
                       .map((ceo) => Marker(
                         point: ceo.posicao,
-                        width: 0,
-                        height: 0,
+                        width: 120,
+                        height: 24,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 25),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(3),
-                              border: Border.all(color: Colors.orange.withOpacity(0.5), width: 0.5),
-                            ),
-                            child: Text(
-                              ceo.nome,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.orange,
+                          child: IntrinsicWidth(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(3),
+                                border: Border.all(color: Colors.orange.withOpacity(0.5), width: 0.5),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              child: Text(
+                                ceo.nome,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.orange,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                         ),
@@ -360,27 +366,29 @@ class MapScreenState extends State<MapScreen> {
                       .where((dio) => _isPointInViewport(dio.posicao))
                       .map((dio) => Marker(
                         point: dio.posicao,
-                        width: 0,
-                        height: 0,
+                        width: 120,
+                        height: 24,
                         alignment: Alignment.topCenter,
                         child: Transform.translate(
                           offset: const Offset(0, 25),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(3),
-                              border: Border.all(color: Colors.purple.withOpacity(0.5), width: 0.5),
-                            ),
-                            child: Text(
-                              dio.nome,
-                              style: const TextStyle(
-                                fontSize: 9,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.purple,
+                          child: IntrinsicWidth(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(3),
+                                border: Border.all(color: Colors.purple.withOpacity(0.5), width: 0.5),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              child: Text(
+                                dio.nome,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.purple,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           ),
                         ),
